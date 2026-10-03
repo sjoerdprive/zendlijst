@@ -1,20 +1,27 @@
+"use client";
+
 import Link from "next/link";
+import { useDictionary, useLocale } from "@/shared/i18n";
 import { formatDate } from "@/shared/lib";
 import type { NewsletterCardProps } from "../types";
 import { publishedAt } from "../utils";
 
 export const NewsletterCard = ({ newsletter, href }: NewsletterCardProps) => {
+  const t = useDictionary();
+  const locale = useLocale();
   const date = publishedAt(newsletter);
   return (
     <Link
       href={href}
-      className="block rounded-xl border border-zinc-200 bg-white p-5 transition-colors hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
+      className="group relative block h-full overflow-hidden rounded-2xl border border-line bg-surface p-5 pl-6 shadow-sm shadow-ink/5 transition hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
     >
-      <p className="text-xs uppercase tracking-wide text-zinc-500">
-        {date ? formatDate(date) : "Unscheduled"} · {newsletter.contentType === "application/pdf" ? "PDF" : "Web"}
+      <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1 bg-accent transition-colors group-hover:bg-brand" />
+      <p className="text-xs font-semibold uppercase tracking-wider text-accent-ink">
+        {date ? formatDate(date, locale) : t.archive.unscheduled} ·{" "}
+        {newsletter.contentType === "application/pdf" ? t.archive.pdf : t.archive.web}
       </p>
-      <h3 className="mt-1 font-semibold">{newsletter.title}</h3>
-      {newsletter.summary && <p className="mt-1 line-clamp-2 text-sm text-zinc-600 dark:text-zinc-400">{newsletter.summary}</p>}
+      <h3 className="mt-1.5 font-display text-lg font-semibold leading-snug group-hover:text-brand">{newsletter.title}</h3>
+      {newsletter.summary && <p className="mt-1 line-clamp-2 text-sm text-muted">{newsletter.summary}</p>}
     </Link>
   );
 };

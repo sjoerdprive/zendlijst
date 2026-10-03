@@ -8,6 +8,7 @@ import {
   setEmailNotifications,
 } from "@/entities/membership/server";
 import { requireCurrentOrganisation } from "@/entities/organisation/server";
+import { getDictionary } from "@/shared/i18n/server";
 import { actionError, actionSuccess, type ActionState } from "@/shared/lib";
 import { unsubscribeByToken } from "./unsubscribe";
 
@@ -17,15 +18,12 @@ export const updateNotificationsAction = async (
 ): Promise<ActionState> => {
   const organisation = await requireCurrentOrganisation();
   const member = await authorizeMember(organisation.id);
-  if (!member) return actionError("Please sign in again.");
+  const t = await getDictionary();
+  if (!member) return actionError(t.settings.signInAgain);
   const enabled = formData.get("emailNotifications") === "on";
   await setEmailNotifications(member.id, enabled);
   refresh();
-  return actionSuccess(
-    enabled
-      ? "You will receive new issues by email."
-      : "Email notifications are off. You can still read every issue here.",
-  );
+  return actionSuccess(enabled ? t.settings.notificationsOn : t.settings.notificationsOff);
 };
 
 export const unsubscribeAction = async (): Promise<void> => {
@@ -43,10 +41,7 @@ export const unsubscribeWithTokenAction = async (
 ): Promise<ActionState> => {
   const organisation = await requireCurrentOrganisation();
   const result = await unsubscribeByToken(String(formData.get("token") ?? ""), organisation.id);
-  if (result === "invalid") return actionError("This unsubscribe link is invalid or has already been used.");
-  return actionSuccess(
-    result === "notifications-off"
-      ? "Email notifications are turned off for your account."
-      : "You have been unsubscribed. Sorry to see you go!",
-  );
+  const t = await getDictionary();
+  if (result === "invalid") return actionError(t.unsubscribe.invalid);
+  return actionSuccess(result === "notifications-off" ? t.unsubscribe.notificationsOff : t.unsubscribe.done);
 };

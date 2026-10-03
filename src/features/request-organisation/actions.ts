@@ -6,6 +6,8 @@ import {
   isSlugAvailable,
 } from "@/entities/organisation/server";
 import { isValidSlug } from "@/entities/organisation";
+import type { Dictionary } from "@/shared/i18n";
+import { getDictionary } from "@/shared/i18n/server";
 import {
   actionError,
   actionSuccess,
@@ -15,37 +17,33 @@ import {
 } from "@/shared/lib";
 import { allowRequest } from "@/shared/lib/server";
 
-const requestSchema = z.object({
-  organisationName: z.string().trim().min(2, "Enter your organisation's name.").max(100),
-  slug: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .refine(isValidSlug, "Use 3–32 lowercase letters, digits or dashes (no reserved names)."),
-  adminEmail: emailSchema,
-  message: z.string().trim().max(1000).optional(),
-  // Honeypot: real users never fill this hidden field.
-  website: z.string().max(0).optional(),
-});
+const requestSchema = (t: Dictionary) =>
+  z.object({
+    organisationName: z.string().trim().min(2, t.requestOrganisation.nameRequired).max(100),
+    slug: z.string().trim().toLowerCase().refine(isValidSlug, t.requestOrganisation.slugInvalid),
+    adminEmail: emailSchema(t.common.invalidEmail),
+    message: z.string().trim().max(1000).optional(),
+    // Honeypot: real users never fill this hidden field.
+    website: z.string().max(0).optional(),
+  });
 
 export const requestOrganisationAction = async (
   _previous: ActionState,
   formData: FormData,
 ): Promise<ActionState> => {
-  const parsed = requestSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return actionError("Please check the form.", fieldErrors(parsed.error));
+  const t = await getDictionary();
+  const parsed = requestSchema(t).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return actionError(t.common.checkForm, fieldErrors(parsed.error));
 
   if (!(await allowRequest("organisation-request", undefined, { max: 3 }))) {
-    return actionError("Too many requests. Please try again later.");
+    return actionError(t.requestOrganisation.tooMany);
   }
 
   const { organisationName, slug, adminEmail, message } = parsed.data;
   if (!(await isSlugAvailable(slug))) {
-    return actionError("That subdomain is already taken.", { slug: ["That subdomain is already taken."] });
+    return actionError(t.requestOrganisation.slugTaken, { slug: [t.requestOrganisation.slugTaken] });
   }
 
   await createOrganisationRequest({ organisationName, slug, adminEmail, message });
-  return actionSuccess(
-    "Thanks! We received your request. You'll get an email at the admin address once your newsletter space is ready.",
-  );
+  return actionSuccess(t.requestOrganisation.success);
 };

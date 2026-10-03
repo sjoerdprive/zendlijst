@@ -3,7 +3,19 @@ import type { FailedDelivery } from "@/entities/delivery";
 import type { NewsletterFile } from "@/entities/newsletter";
 import type { Organisation } from "@/entities/organisation";
 import { organisationUrl } from "@/shared/config";
-import { escapeHtml, renderButton, renderEmailLayout, type MailMessage } from "@/shared/mail";
+import { DEFAULT_LOCALE, getDictionaryFor } from "@/shared/i18n";
+import {
+  EMAIL_COLORS,
+  escapeHtml,
+  renderButton,
+  renderEmailLayout,
+  type MailMessage,
+} from "@/shared/mail";
+
+// Sent from the scheduler, where no visitor language is known: use the
+// platform's main language.
+const LOCALE = DEFAULT_LOCALE;
+const t = getDictionaryFor(LOCALE).emails;
 
 interface NewsletterEmailInput {
   organisation: Organisation;
@@ -14,10 +26,10 @@ interface NewsletterEmailInput {
 }
 
 const footerHtml = (organisationName: string, readUrl: string, unsubscribeUrl: string) => `
-<div style="margin:32px auto 0;max-width:560px;padding:16px;border-top:1px solid #e4e4e7;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#71717a;text-align:center">
-  You receive this because you subscribed to ${escapeHtml(organisationName)}.<br>
-  <a href="${escapeHtml(readUrl)}" style="color:#71717a">Read online</a> ·
-  <a href="${escapeHtml(unsubscribeUrl)}" style="color:#71717a">Unsubscribe</a>
+<div style="margin:32px auto 0;max-width:560px;padding:16px;border-top:1px solid ${EMAIL_COLORS.line};font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${EMAIL_COLORS.muted};text-align:center">
+  ${t.footerReasonHtml(escapeHtml(organisationName))}<br>
+  <a href="${escapeHtml(readUrl)}" style="color:${EMAIL_COLORS.brand}">${escapeHtml(t.readOnline)}</a> ·
+  <a href="${escapeHtml(unsubscribeUrl)}" style="color:${EMAIL_COLORS.muted}">${escapeHtml(t.unsubscribe)}</a>
 </div>`;
 
 // Uploaded HTML is sent as-is (it comes from the organisation's own team) with
@@ -50,8 +62,8 @@ export const buildNewsletterEmail = ({
   const text = [
     newsletter.title,
     summary ?? "",
-    `Read online: ${readUrl}`,
-    `Unsubscribe: ${unsubscribeUrl}`,
+    `${t.readOnline}: ${readUrl}`,
+    `${t.unsubscribe}: ${unsubscribeUrl}`,
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -79,8 +91,9 @@ export const buildNewsletterEmail = ({
     html: renderEmailLayout(
       newsletter.title,
       `${summary ? `<p>${escapeHtml(summary)}</p>` : ""}
-      <p>The new issue of ${escapeHtml(organisation.name)} is attached as a PDF.</p>
-      ${renderButton(readUrl, "Read online")}${footer}`,
+      <p>${t.pdfAttachedHtml(escapeHtml(organisation.name))}</p>
+      ${renderButton(readUrl, t.readOnline)}${footer}`,
+      LOCALE,
     ),
     attachments: [
       { filename: newsletter.fileName, content: newsletter.content, contentType: newsletter.contentType },
@@ -102,25 +115,27 @@ export const buildFailureAlertEmail = ({
   to,
 }: FailureAlertInput): MailMessage => {
   const dashboardUrl = organisationUrl(organisation.slug, "/team");
-  const subject = `Action needed: ${failures.length} email(s) for “${newsletterTitle}” could not be delivered`;
+  const alert = t.failureAlert;
+  const subject = alert.subject(failures.length, newsletterTitle);
   const rows = failures
     .map(
       (failure) =>
-        `<li><strong>${escapeHtml(failure.email)}</strong><br><span style="color:#71717a;font-size:12px">${escapeHtml(failure.lastError ?? "Unknown error")}</span></li>`,
+        `<li><strong>${escapeHtml(failure.email)}</strong><br><span style="color:${EMAIL_COLORS.muted};font-size:12px">${escapeHtml(failure.lastError ?? alert.unknownError)}</span></li>`,
     )
     .join("");
   return {
     to,
     subject,
-    text: `${failures.length} recipient(s) did not receive "${newsletterTitle}" after several attempts. Please send it to them manually:\n\n${failures
-      .map((failure) => `- ${failure.email} (${failure.lastError ?? "unknown error"})`)
-      .join("\n")}\n\nOpen the team dashboard to download the newsletter and mark them as handled: ${dashboardUrl}`,
+    text: `${alert.textIntro(failures.length, newsletterTitle)}\n\n${failures
+      .map((failure) => `- ${failure.email} (${failure.lastError ?? alert.unknownError})`)
+      .join("\n")}\n\n${alert.textOutro(dashboardUrl)}`,
     html: renderEmailLayout(
-      "Some newsletter emails could not be delivered",
-      `<p>We tried several times, but the following recipients did not receive <strong>${escapeHtml(newsletterTitle)}</strong>. Please send it to them manually.</p>
+      alert.heading,
+      `<p>${alert.bodyHtml(escapeHtml(newsletterTitle))}</p>
       <ul>${rows}</ul>
-      ${renderButton(dashboardUrl, "Open team dashboard")}
-      <p style="color:#71717a;font-size:13px">In the dashboard you can download the newsletter and mark each recipient as handled.</p>`,
+      ${renderButton(dashboardUrl, alert.button)}
+      <p style="color:${EMAIL_COLORS.muted};font-size:13px">${escapeHtml(alert.outro)}</p>`,
+      LOCALE,
     ),
   };
 };

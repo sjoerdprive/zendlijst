@@ -2,12 +2,14 @@
 
 import { useActionState, useState } from "react";
 import { slugify } from "@/entities/organisation";
+import { useDictionary } from "@/shared/i18n";
 import { IDLE_STATE } from "@/shared/lib";
 import { Field, FormMessage, Input, SubmitButton, Textarea } from "@/shared/ui";
 import { requestOrganisationAction } from "../actions";
 import type { RequestOrganisationFormProps } from "../types";
 
 export const RequestOrganisationForm = ({ rootDomain }: RequestOrganisationFormProps) => {
+  const t = useDictionary();
   const [state, formAction] = useActionState(requestOrganisationAction, IDLE_STATE);
   const [slug, setSlug] = useState("");
   const [slugEdited, setSlugEdited] = useState(false);
@@ -17,7 +19,7 @@ export const RequestOrganisationForm = ({ rootDomain }: RequestOrganisationFormP
 
   return (
     <form action={formAction} className="space-y-4">
-      <Field label="Organisation name" name="organisationName" errors={errors?.organisationName}>
+      <Field label={t.requestOrganisation.nameLabel} name="organisationName" errors={errors?.organisationName}>
         <Input
           id="organisationName"
           name="organisationName"
@@ -29,9 +31,9 @@ export const RequestOrganisationForm = ({ rootDomain }: RequestOrganisationFormP
         />
       </Field>
       <Field
-        label="Subdomain"
+        label={t.requestOrganisation.subdomainLabel}
         name="slug"
-        hint={`Your subscribers will visit ${slug || "your-name"}.${rootDomain}`}
+        hint={t.requestOrganisation.subdomainHint(`${slug || t.requestOrganisation.slugPlaceholder}.${rootDomain}`)}
         errors={errors?.slug}
       >
         <Input
@@ -47,14 +49,14 @@ export const RequestOrganisationForm = ({ rootDomain }: RequestOrganisationFormP
         />
       </Field>
       <Field
-        label="Admin email address"
+        label={t.requestOrganisation.adminEmailLabel}
         name="adminEmail"
-        hint="This account manages subscribers and writers. You sign in with a link sent to this address."
+        hint={t.requestOrganisation.adminEmailHint}
         errors={errors?.adminEmail}
       >
         <Input id="adminEmail" name="adminEmail" type="email" autoComplete="email" required />
       </Field>
-      <Field label="Anything we should know? (optional)" name="message" errors={errors?.message}>
+      <Field label={t.requestOrganisation.messageLabel} name="message" errors={errors?.message}>
         <Textarea id="message" name="message" maxLength={1000} />
       </Field>
       <div aria-hidden="true" className="hidden">
@@ -63,7 +65,7 @@ export const RequestOrganisationForm = ({ rootDomain }: RequestOrganisationFormP
         </label>
       </div>
       <FormMessage state={state} />
-      <SubmitButton pendingLabel="Sending request…">Request an account</SubmitButton>
+      <SubmitButton pendingLabel={t.requestOrganisation.pending}>{t.requestOrganisation.submit}</SubmitButton>
     </form>
   );
 };

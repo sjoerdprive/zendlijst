@@ -5,28 +5,27 @@ import { getCurrentOrganisation } from "@/entities/organisation/server";
 import { sendSignInLink, signOutCurrentUser } from "@/shared/auth";
 import { getEnv } from "@/shared/config";
 import { emailBlindIndex } from "@/shared/crypto";
+import { getDictionary } from "@/shared/i18n/server";
 import { actionError, actionSuccess, emailSchema, type ActionState } from "@/shared/lib";
 import { allowRequest } from "@/shared/lib/server";
-
-const CHECK_INBOX =
-  "If that address can sign in here, a sign-in link is on its way. Check your inbox.";
 
 export const signInAction = async (
   _previous: ActionState,
   formData: FormData,
 ): Promise<ActionState> => {
-  const parsed = emailSchema.safeParse(formData.get("email"));
-  if (!parsed.success) return actionError("Enter a valid email address.");
+  const t = await getDictionary();
+  const parsed = emailSchema(t.common.invalidEmail).safeParse(formData.get("email"));
+  if (!parsed.success) return actionError(t.common.invalidEmail);
   const email = parsed.data;
 
   if (!(await allowRequest("sign-in", emailBlindIndex(email)))) {
-    return actionError("Too many attempts. Please wait a few minutes and try again.");
+    return actionError(t.common.tooManyAttempts);
   }
 
   const organisation = await getCurrentOrganisation();
   if (organisation) {
     await sendSignInLink({ email, callbackPath: "/", organisationName: organisation.name });
-    return actionSuccess(CHECK_INBOX);
+    return actionSuccess(t.signIn.checkInbox);
   }
 
   // Root domain: only platform admins have anything to sign in to. Same response
@@ -34,7 +33,7 @@ export const signInAction = async (
   if (getEnv().PLATFORM_ADMIN_EMAILS.includes(email)) {
     await sendSignInLink({ email, callbackPath: "/platform-admin" });
   }
-  return actionSuccess(CHECK_INBOX);
+  return actionSuccess(t.signIn.checkInbox);
 };
 
 export const signOutAction = async (): Promise<void> => {

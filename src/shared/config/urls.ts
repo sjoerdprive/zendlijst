@@ -13,3 +13,11 @@ export const organisationUrl = (slug: string, path = "/"): string => {
     `${env.APP_PROTOCOL}://${slug}.${env.APP_ROOT_DOMAIN}`,
   ).toString();
 };
+
+// Domain for cookies that should follow the visitor across tenant subdomains
+// (e.g. the language preference). Hosts without a dot, like "localhost",
+// cannot carry a Domain attribute, so those cookies stay host-only.
+export const sharedCookieDomain = (): string | undefined => {
+  const host = getEnv().APP_ROOT_DOMAIN.split(":")[0] ?? "";
+  return host.includes(".") ? host : undefined;
+};

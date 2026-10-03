@@ -1,14 +1,21 @@
 import Link from "next/link";
-import { PageContainer } from "@/shared/ui";
+import { getDictionary } from "@/shared/i18n/server";
+import { buttonClasses, PageContainer } from "@/shared/ui";
 
-export const NotFoundView = () => (
-  <PageContainer width="narrow">
-    <div className="space-y-3 text-center">
-      <h1 className="text-2xl font-semibold">Page not found</h1>
-      <p className="text-zinc-500">This page does not exist or you do not have access to it.</p>
-      <Link href="/" className="font-medium underline">
-        Go home
-      </Link>
-    </div>
-  </PageContainer>
-);
+export const NotFoundView = async () => {
+  const t = await getDictionary();
+  return (
+    <PageContainer width="narrow">
+      <div className="space-y-4 text-center">
+        <p aria-hidden="true" className="font-display text-7xl font-semibold text-brand">
+          404<span className="text-accent">.</span>
+        </p>
+        <h1 className="font-display text-2xl font-semibold">{t.notFound.title}</h1>
+        <p className="text-muted">{t.notFound.body}</p>
+        <Link href="/" className={buttonClasses("primary")}>
+          {t.notFound.home}
+        </Link>
+      </div>
+    </PageContainer>
+  );
+};

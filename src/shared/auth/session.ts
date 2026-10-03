@@ -2,6 +2,7 @@ import "server-only";
 import { headers } from "next/headers";
 import { cache } from "react";
 import { normalizeEmail } from "@/shared/crypto";
+import { getLocale } from "@/shared/i18n/server";
 import { getAuth } from "./auth";
 import type { SessionUser } from "./types";
 
@@ -41,9 +42,10 @@ export const sendSignInLink = async (input: {
       email: normalizeEmail(input.email),
       callbackURL: input.callbackPath,
       errorCallbackURL: "/sign-in?error=link",
-      metadata: input.organisationName
-        ? { organisationName: input.organisationName }
-        : undefined,
+      metadata: {
+        locale: await getLocale(),
+        ...(input.organisationName ? { organisationName: input.organisationName } : {}),
+      },
     },
   });
 };

@@ -8,6 +8,7 @@ import {
   rejectOrganisationRequest,
 } from "@/entities/organisation/server";
 import { findOrCreateUserByEmail, getSessionUser, isPlatformAdmin } from "@/shared/auth";
+import { getDictionary } from "@/shared/i18n/server";
 import { actionError, actionSuccess, type ActionState } from "@/shared/lib";
 import { sendWelcomeEmail } from "./emails";
 
@@ -15,21 +16,22 @@ export const reviewRequestAction = async (
   _previous: ActionState,
   formData: FormData,
 ): Promise<ActionState> => {
-  if (!isPlatformAdmin(await getSessionUser())) return actionError("Not allowed.");
+  const t = await getDictionary();
+  if (!isPlatformAdmin(await getSessionUser())) return actionError(t.common.notAllowed);
 
   const requestId = String(formData.get("requestId") ?? "");
   const decision = formData.get("decision");
   const request = await getPendingOrganisationRequest(requestId);
-  if (!request) return actionError("This request was already handled.");
+  if (!request) return actionError(t.platformAdmin.alreadyHandled);
 
   if (decision === "reject") {
     await rejectOrganisationRequest(requestId);
     refresh();
-    return actionSuccess(`Rejected ${request.organisationName}.`);
+    return actionSuccess(t.platformAdmin.rejectedMessage(request.organisationName));
   }
 
   const organisation = await approveOrganisationRequest(requestId);
-  if (!organisation) return actionError("The subdomain is no longer available.");
+  if (!organisation) return actionError(t.platformAdmin.slugUnavailable);
 
   const adminUserId = await findOrCreateUserByEmail(request.adminEmail);
   await addMember(organisation.id, adminUserId, "admin");
@@ -39,10 +41,8 @@ export const reviewRequestAction = async (
   } catch (error) {
     console.error("[review] welcome email failed", error);
     refresh();
-    return actionError(
-      `Approved ${organisation.name}, but the welcome email could not be sent. Let the admin know manually.`,
-    );
+    return actionError(t.platformAdmin.approvedEmailFailed(organisation.name));
   }
   refresh();
-  return actionSuccess(`Approved ${organisation.name}. The admin has been emailed.`);
+  return actionSuccess(t.platformAdmin.approvedMessage(organisation.name));
 };

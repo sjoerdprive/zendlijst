@@ -6,6 +6,8 @@ import { ensureSubscription } from "@/entities/membership/server";
 import { requireCurrentOrganisation } from "@/entities/organisation/server";
 import { getSessionUser, sendSignInLink } from "@/shared/auth";
 import { emailBlindIndex } from "@/shared/crypto";
+import type { Dictionary } from "@/shared/i18n";
+import { getDictionary } from "@/shared/i18n/server";
 import {
   actionError,
   actionSuccess,
@@ -16,27 +18,29 @@ import {
 import { allowRequest } from "@/shared/lib/server";
 import { createSubscribeToken } from "./utils";
 
-const subscribeSchema = z.object({
-  email: emailSchema,
-  notify: z.literal("on").optional(),
-});
+const subscribeSchema = (t: Dictionary) =>
+  z.object({
+    email: emailSchema(t.common.invalidEmail),
+    notify: z.literal("on").optional(),
+  });
 
 export const subscribeAction = async (
   _previous: ActionState,
   formData: FormData,
 ): Promise<ActionState> => {
-  const parsed = subscribeSchema.safeParse({
+  const t = await getDictionary();
+  const parsed = subscribeSchema(t).safeParse({
     email: formData.get("email"),
     notify: formData.get("notify") ?? undefined,
   });
   if (!parsed.success) {
-    return actionError("Please check the form.", fieldErrors(parsed.error));
+    return actionError(t.common.checkForm, fieldErrors(parsed.error));
   }
   const { email } = parsed.data;
   const notify = parsed.data.notify === "on";
 
   if (!(await allowRequest("subscribe", emailBlindIndex(email)))) {
-    return actionError("Too many attempts. Please wait a few minutes and try again.");
+    return actionError(t.common.tooManyAttempts);
   }
 
   const organisation = await requireCurrentOrganisation();
@@ -49,9 +53,7 @@ export const subscribeAction = async (
     callbackPath: `/subscribe/confirm?${params.toString()}`,
     organisationName: organisation.name,
   });
-  return actionSuccess(
-    "Almost there! We sent you an email. Click the link inside to confirm your subscription.",
-  );
+  return actionSuccess(t.subscribe.success);
 };
 
 // For visitors who are already signed in (their email is verified) but are not

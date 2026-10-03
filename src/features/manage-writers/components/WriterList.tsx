@@ -5,7 +5,7 @@ import type { WriterListProps } from "../types";
 
 export const WriterList = ({ writers, admin }: WriterListProps) => (
   <div className="space-y-6">
-    <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+    <ul className="divide-y divide-line">
       {admin && (
         <li className="flex items-center justify-between gap-4 py-3">
           <span className="break-all text-sm">{admin.email}</span>

@@ -5,6 +5,7 @@ import { addMember, authorizeMember, demoteWriter } from "@/entities/membership/
 import { MAX_WRITERS } from "@/entities/membership";
 import { requireCurrentOrganisation } from "@/entities/organisation/server";
 import { findOrCreateUserByEmail } from "@/shared/auth";
+import { getDictionary } from "@/shared/i18n/server";
 import { actionError, actionSuccess, emailSchema, type ActionState } from "@/shared/lib";
 import { sendWriterInvitation } from "./emails";
 
@@ -19,29 +20,30 @@ export const addWriterAction = async (
   formData: FormData,
 ): Promise<ActionState> => {
   const organisation = await authorizeAdmin();
-  if (!organisation) return actionError("Only the organisation admin can manage writers.");
+  const t = await getDictionary();
+  if (!organisation) return actionError(t.writers.onlyAdmin);
 
-  const parsed = emailSchema.safeParse(formData.get("email"));
-  if (!parsed.success) return actionError("Enter a valid email address.");
+  const parsed = emailSchema(t.common.invalidEmail).safeParse(formData.get("email"));
+  if (!parsed.success) return actionError(t.common.invalidEmail);
 
   const userId = await findOrCreateUserByEmail(parsed.data);
   const result = await addMember(organisation.id, userId, "writer");
   refresh();
 
   if (result.status === "writer-limit-reached") {
-    return actionError(`You can have at most ${MAX_WRITERS} writers. Remove one first.`);
+    return actionError(t.writers.limitError(MAX_WRITERS));
   }
   if (result.status === "already-member") {
-    return actionError(`${parsed.data} is already part of the team.`);
+    return actionError(t.writers.alreadyTeam(parsed.data));
   }
 
   try {
     await sendWriterInvitation(organisation, parsed.data);
   } catch (error) {
     console.error("[writers] invitation email failed", error);
-    return actionSuccess(`${parsed.data} is now a writer, but the invitation email failed. Let them know to sign in.`);
+    return actionSuccess(t.writers.inviteFailed(parsed.data));
   }
-  return actionSuccess(`${parsed.data} is now a writer and has been emailed.`);
+  return actionSuccess(t.writers.added(parsed.data));
 };
 
 // Removing a writer keeps them as a regular subscriber; they can unsubscribe themselves.
@@ -50,8 +52,9 @@ export const removeWriterAction = async (
   formData: FormData,
 ): Promise<ActionState> => {
   const organisation = await authorizeAdmin();
-  if (!organisation) return actionError("Only the organisation admin can manage writers.");
+  const t = await getDictionary();
+  if (!organisation) return actionError(t.writers.onlyAdmin);
   const removed = await demoteWriter(organisation.id, String(formData.get("membershipId") ?? ""));
   refresh();
-  return removed ? actionSuccess("Writer removed.") : actionError("Could not remove this writer.");
+  return removed ? actionSuccess(t.writers.removed) : actionError(t.writers.couldNotRemove);
 };

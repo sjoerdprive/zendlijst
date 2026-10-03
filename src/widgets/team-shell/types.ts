@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { TeamRole } from "@/entities/membership";
+import type { Dictionary } from "@/shared/i18n";
 
 export interface TeamShellProps {
   role: TeamRole;
@@ -14,6 +15,6 @@ export interface TeamNavProps {
 
 export interface TeamNavItem {
   href: string;
-  label: string;
+  labelKey: Exclude<keyof Dictionary["teamNav"], "label">;
   adminOnly: boolean;
 }

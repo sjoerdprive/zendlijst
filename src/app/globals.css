@@ -1,10 +1,81 @@
 @import "tailwindcss";
 
+/*
+ * Palette: Delft blue for structure, Dutch orange as the accent, on warm
+ * newsprint. Components use these tokens (bg-surface, text-muted, …) so dark
+ * mode is handled here rather than with `dark:` variants everywhere.
+ */
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-fraunces);
+
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-soft: var(--brand-soft);
+  --color-on-brand: var(--on-brand);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+  --color-danger: var(--danger);
 }
 
 :root {
   color-scheme: light dark;
+
+  --paper: #faf6ee;
+  --surface: #ffffff;
+  --surface-sunken: #f3ede1;
+  --ink: #1c2333;
+  --muted: #5b6478;
+  --line: #e7dfd0;
+  --line-strong: #cfc3ad;
+  --brand: #2b44b8;
+  --brand-strong: #1f3290;
+  --brand-soft: #e6eafb;
+  --on-brand: #ffffff;
+  --accent: #f26b21;
+  --accent-soft: #fde7d6;
+  --accent-ink: #a6420b;
+  --danger: #b42318;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #11141c;
+    --surface: #1a1f2b;
+    --surface-sunken: #151924;
+    --ink: #edeae3;
+    --muted: #9ba3b4;
+    --line: #2a3142;
+    --line-strong: #3b4459;
+    --brand: #8ea2ff;
+    --brand-strong: #b3c0ff;
+    --brand-soft: #1f2a52;
+    --on-brand: #0e1430;
+    --accent: #ff8a4c;
+    --accent-soft: #3a2416;
+    --accent-ink: #ffb88f;
+    --danger: #ff8a80;
+  }
+}
+
+body {
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(60rem 30rem at 100% -10%, color-mix(in oklab, var(--accent) 10%, transparent), transparent 70%),
+    radial-gradient(50rem 30rem at -10% 0%, color-mix(in oklab, var(--brand) 9%, transparent), transparent 70%);
+  background-repeat: no-repeat;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--ink);
 }

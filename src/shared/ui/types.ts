@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ComponentProps, ReactNode } from "react";
 import type { ActionState } from "@/shared/lib";
 
-export type ButtonVariant = "primary" | "secondary" | "danger" | "ghost";
+export type ButtonVariant = "primary" | "secondary" | "danger" | "ghost" | "dangerGhost";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;

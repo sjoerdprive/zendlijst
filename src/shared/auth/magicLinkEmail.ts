@@ -1,5 +1,6 @@
 import "server-only";
-import { escapeHtml, renderButton, renderEmailLayout, sendMail } from "@/shared/mail";
+import { DEFAULT_LOCALE, getDictionaryFor, isLocale } from "@/shared/i18n";
+import { EMAIL_COLORS, escapeHtml, renderButton, renderEmailLayout, sendMail } from "@/shared/mail";
 
 interface MagicLinkEmail {
   email: string;
@@ -12,20 +13,24 @@ export const sendMagicLinkEmail = async ({
   url,
   metadata,
 }: MagicLinkEmail): Promise<void> => {
+  // The requester's language travels with the link request (see sendSignInLink).
+  const locale = isLocale(metadata?.locale) ? metadata.locale : DEFAULT_LOCALE;
+  const t = getDictionaryFor(locale).emails.magicLink;
   const context =
     typeof metadata?.organisationName === "string"
       ? metadata.organisationName
       : "Nieuwsbrief";
-  const subject = `Your sign-in link for ${context}`;
+  const subject = t.subject(context);
   await sendMail({
     to: email,
     subject,
-    text: `Use this link to sign in to ${context}. It expires in 15 minutes.\n\n${url}\n\nIf you did not request this, you can ignore this email.`,
+    text: `${t.text(context)}\n\n${url}\n\n${t.ignore}`,
     html: renderEmailLayout(
       subject,
-      `<p>Use the button below to confirm your email address and sign in to <strong>${escapeHtml(context)}</strong>. The link expires in 15 minutes and works once.</p>
-      ${renderButton(url, "Sign in")}
-      <p style="color:#71717a;font-size:13px">If you did not request this, you can ignore this email.</p>`,
+      `<p>${t.bodyHtml(escapeHtml(context))}</p>
+      ${renderButton(url, t.button)}
+      <p style="color:${EMAIL_COLORS.muted};font-size:13px">${escapeHtml(t.ignore)}</p>`,
+      locale,
     ),
   });
 };

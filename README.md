@@ -71,3 +71,14 @@ src/
 ```
 
 Each slice exposes a client-safe `index.ts` and, where it has data access, a server-only `server.ts`.
+
+## Languages and theme
+
+- Dutch is the default language; English is available through the NL/EN switch in the header.
+  The choice is stored in a `locale` cookie, shared across tenant subdomains when `APP_ROOT_DOMAIN` has a dot.
+- All UI and email text lives in `src/shared/i18n/dictionaries/` (`nl.ts` is the source of truth, `en.ts` must match its shape).
+  Server code uses `getDictionary()` from `@/shared/i18n/server`; client components use `useDictionary()`.
+- Sign-in emails follow the requester's language. Emails to other people (newsletters, failure alerts, writer
+  invitations, welcome emails) are sent in Dutch, because the recipient's preference is unknown.
+- Colours are design tokens in `src/app/globals.css` (Delft blue, Dutch orange, warm paper), with a dark-mode set.
+  Components use them via Tailwind classes such as `bg-surface`, `text-muted` and `bg-brand`.

@@ -6,6 +6,7 @@ import { authorizeMember } from "@/entities/membership/server";
 import { getNewsletter } from "@/entities/newsletter/server";
 import { createNote, deleteNote, setNoteDone } from "@/entities/note/server";
 import { requireCurrentOrganisation } from "@/entities/organisation/server";
+import { getDictionary } from "@/shared/i18n/server";
 import { actionError, actionSuccess, type ActionState } from "@/shared/lib";
 
 const authorizeTeam = async () => {
@@ -15,7 +16,7 @@ const authorizeTeam = async () => {
 };
 
 const noteSchema = z.object({
-  body: z.string().trim().min(1, "Write something first.").max(2000),
+  body: z.string().trim().min(1).max(2000),
   newsletterId: z.string().optional(),
 });
 
@@ -24,12 +25,13 @@ export const addNoteAction = async (
   formData: FormData,
 ): Promise<ActionState> => {
   const context = await authorizeTeam();
-  if (!context) return actionError("Not allowed.");
+  const t = await getDictionary();
+  if (!context) return actionError(t.common.notAllowed);
   const parsed = noteSchema.safeParse({
     body: formData.get("body"),
     newsletterId: formData.get("newsletterId") || undefined,
   });
-  if (!parsed.success) return actionError("Write something first.");
+  if (!parsed.success) return actionError(t.notes.writeSomething);
 
   // Only link to newsletters of this organisation.
   const linked = parsed.data.newsletterId
@@ -43,7 +45,7 @@ export const addNoteAction = async (
     newsletterId: linked?.id ?? null,
   });
   refresh();
-  return actionSuccess("Note added.");
+  return actionSuccess(t.notes.added);
 };
 
 export const toggleNoteAction = async (formData: FormData): Promise<void> => {

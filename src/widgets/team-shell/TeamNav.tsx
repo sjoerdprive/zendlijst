@@ -2,24 +2,26 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useDictionary } from "@/shared/i18n";
 import { cn } from "@/shared/lib";
 import type { TeamNavItem, TeamNavProps } from "./types";
 
 const ITEMS: TeamNavItem[] = [
-  { href: "/team", label: "Overview", adminOnly: false },
-  { href: "/team/newsletters", label: "Newsletters", adminOnly: false },
-  { href: "/team/notes", label: "Notes", adminOnly: false },
-  { href: "/team/subscribers", label: "Subscribers", adminOnly: true },
-  { href: "/team/writers", label: "Writers", adminOnly: true },
+  { href: "/team", labelKey: "overview", adminOnly: false },
+  { href: "/team/newsletters", labelKey: "newsletters", adminOnly: false },
+  { href: "/team/notes", labelKey: "notes", adminOnly: false },
+  { href: "/team/subscribers", labelKey: "subscribers", adminOnly: true },
+  { href: "/team/writers", labelKey: "writers", adminOnly: true },
 ];
 
 // Strips the internal "/t/<slug>" prefix in case the rewritten path leaks through.
 const visiblePath = (pathname: string) => pathname.replace(/^\/t\/[^/]+/, "") || "/";
 
 export const TeamNav = ({ role }: TeamNavProps) => {
+  const t = useDictionary();
   const pathname = visiblePath(usePathname());
   return (
-    <nav aria-label="Team" className="flex gap-1 overflow-x-auto border-b border-zinc-200 dark:border-zinc-800">
+    <nav aria-label={t.teamNav.label} className="flex gap-1 overflow-x-auto rounded-full border border-line bg-surface p-1 shadow-sm shadow-ink/5">
       {ITEMS.filter((item) => role === "admin" || !item.adminOnly).map((item) => {
         const active = pathname === item.href;
         return (
@@ -28,13 +30,11 @@ export const TeamNav = ({ role }: TeamNavProps) => {
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "-mb-px whitespace-nowrap border-b-2 px-3 py-2 text-sm",
-              active
-                ? "border-zinc-900 font-medium text-zinc-900 dark:border-zinc-100 dark:text-zinc-100"
-                : "border-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100",
+              "whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
+              active ? "bg-brand text-on-brand shadow-sm" : "text-muted hover:bg-brand-soft hover:text-brand",
             )}
           >
-            {item.label}
+            {t.teamNav[item.labelKey]}
           </Link>
         );
       })}

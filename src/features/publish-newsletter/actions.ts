@@ -13,6 +13,8 @@ import {
   setNewsletterSchedule,
 } from "@/entities/newsletter/server";
 import { requireCurrentOrganisation } from "@/entities/organisation/server";
+import type { Dictionary } from "@/shared/i18n";
+import { getDictionary } from "@/shared/i18n/server";
 import { actionError, actionSuccess, fieldErrors, type ActionState } from "@/shared/lib";
 
 const authorizeTeam = async () => {
@@ -21,45 +23,52 @@ const authorizeTeam = async () => {
   return member ? { organisation, member } : null;
 };
 
-const scheduleSchema = z
-  .union([z.literal(""), z.iso.datetime()])
-  .transform((value) => (value ? new Date(value) : null))
-  .refine((date) => !date || date.getTime() > Date.now() - 60_000, "Pick a moment in the future.");
+const scheduleSchema = (t: Dictionary) =>
+  z
+    .union([z.literal(""), z.iso.datetime()])
+    .transform((value) => (value ? new Date(value) : null))
+    .refine((date) => !date || date.getTime() > Date.now() - 60_000, t.newsletters.futureMoment);
 
-const uploadSchema = z.object({
-  title: z.string().trim().min(2, "Give the newsletter a title.").max(200),
-  summary: z.string().trim().max(500).optional(),
-  scheduledAt: scheduleSchema,
-  mode: z.enum(["schedule", "now", "draft"]),
-});
+const uploadSchema = (t: Dictionary) =>
+  z.object({
+    title: z.string().trim().min(2, t.newsletters.titleRequired).max(200),
+    summary: z.string().trim().max(500).optional(),
+    scheduledAt: scheduleSchema(t),
+    mode: z.enum(["schedule", "now", "draft"]),
+  });
 
 export const uploadNewsletterAction = async (
   _previous: ActionState,
   formData: FormData,
 ): Promise<ActionState> => {
   const context = await authorizeTeam();
-  if (!context) return actionError("Only admins and writers can upload newsletters.");
+  const t = await getDictionary();
+  if (!context) return actionError(t.newsletters.notAllowedUpload);
 
-  const parsed = uploadSchema.safeParse({
+  const parsed = uploadSchema(t).safeParse({
     title: formData.get("title"),
     summary: formData.get("summary") || undefined,
     scheduledAt: formData.get("scheduledAt") ?? "",
     mode: formData.get("mode"),
   });
-  if (!parsed.success) return actionError("Please check the form.", fieldErrors(parsed.error));
+  if (!parsed.success) return actionError(t.common.checkForm, fieldErrors(parsed.error));
 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    return actionError("Choose a file to upload.", { file: ["Choose a file to upload."] });
+    return actionError(t.newsletters.chooseFile, { file: [t.newsletters.chooseFile] });
   }
   const contentType = contentTypeForFileName(file.name);
-  if (!contentType) return actionError("Only HTML and PDF files are supported.", { file: ["Use .html or .pdf"] });
-  if (file.size > MAX_NEWSLETTER_BYTES) return actionError("The file is larger than 8 MB.", { file: ["Max 8 MB"] });
+  if (!contentType) {
+    return actionError(t.newsletters.unsupportedType, { file: [t.newsletters.useHtmlOrPdf] });
+  }
+  if (file.size > MAX_NEWSLETTER_BYTES) {
+    return actionError(t.newsletters.tooLarge, { file: [t.newsletters.maxSize] });
+  }
 
   const { title, summary, mode } = parsed.data;
   const scheduledAt = mode === "now" ? new Date() : mode === "schedule" ? parsed.data.scheduledAt : null;
   if (mode === "schedule" && !scheduledAt) {
-    return actionError("Pick a date and time.", { scheduledAt: ["Pick a date and time."] });
+    return actionError(t.newsletters.pickDateTime, { scheduledAt: [t.newsletters.pickDateTime] });
   }
 
   await createNewsletter({
@@ -74,35 +83,37 @@ export const uploadNewsletterAction = async (
   });
   refresh();
 
-  if (mode === "now") return actionSuccess("Sending has started. It goes out within a minute.");
-  if (mode === "draft") return actionSuccess("Saved as draft.");
-  return actionSuccess("Newsletter scheduled.");
+  if (mode === "now") return actionSuccess(t.newsletters.sendingStarted);
+  if (mode === "draft") return actionSuccess(t.newsletters.savedDraft);
+  return actionSuccess(t.newsletters.scheduled);
 };
 
-const rescheduleSchema = z.object({
-  newsletterId: z.string().min(1),
-  scheduledAt: scheduleSchema,
-});
+const rescheduleSchema = (t: Dictionary) =>
+  z.object({
+    newsletterId: z.string().min(1),
+    scheduledAt: scheduleSchema(t),
+  });
 
 export const rescheduleNewsletterAction = async (
   _previous: ActionState,
   formData: FormData,
 ): Promise<ActionState> => {
   const context = await authorizeTeam();
-  if (!context) return actionError("Not allowed.");
-  const parsed = rescheduleSchema.safeParse({
+  const t = await getDictionary();
+  if (!context) return actionError(t.common.notAllowed);
+  const parsed = rescheduleSchema(t).safeParse({
     newsletterId: formData.get("newsletterId"),
     scheduledAt: formData.get("scheduledAt") ?? "",
   });
-  if (!parsed.success) return actionError("Pick a moment in the future.");
+  if (!parsed.success) return actionError(t.newsletters.futureMoment);
   const updated = await setNewsletterSchedule(
     context.organisation.id,
     parsed.data.newsletterId,
     parsed.data.scheduledAt,
   );
   refresh();
-  if (!updated) return actionError("This newsletter is already being sent.");
-  return actionSuccess(parsed.data.scheduledAt ? "Schedule updated." : "Moved back to drafts.");
+  if (!updated) return actionError(t.newsletters.alreadySending);
+  return actionSuccess(parsed.data.scheduledAt ? t.newsletters.scheduleUpdated : t.newsletters.movedToDrafts);
 };
 
 export const deleteNewsletterAction = async (
@@ -110,8 +121,9 @@ export const deleteNewsletterAction = async (
   formData: FormData,
 ): Promise<ActionState> => {
   const context = await authorizeTeam();
-  if (!context) return actionError("Not allowed.");
+  const t = await getDictionary();
+  if (!context) return actionError(t.common.notAllowed);
   const deleted = await deleteNewsletter(context.organisation.id, String(formData.get("newsletterId") ?? ""));
   refresh();
-  return deleted ? actionSuccess("Newsletter deleted.") : actionError("Sent newsletters cannot be deleted.");
+  return deleted ? actionSuccess(t.newsletters.deleted) : actionError(t.newsletters.cannotDeleteSent);
 };

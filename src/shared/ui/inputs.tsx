@@ -2,7 +2,7 @@ import { cn } from "@/shared/lib";
 import type { InputProps, SelectProps, TextareaProps } from "./types";
 
 const CONTROL_CLASSES =
-  "block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-xs placeholder:text-zinc-400 focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
+  "block w-full rounded-xl border border-line-strong bg-surface px-3 py-2 text-sm text-ink shadow-xs placeholder:text-muted/70 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/25 disabled:opacity-60 file:mr-3 file:rounded-full file:border-0 file:bg-brand-soft file:px-3 file:py-1 file:text-sm file:font-semibold file:text-brand";
 
 export const Input = ({ className, ...props }: InputProps) => (
   <input className={cn(CONTROL_CLASSES, className)} {...props} />

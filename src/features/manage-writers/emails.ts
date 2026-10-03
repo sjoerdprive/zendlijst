@@ -1,18 +1,22 @@
 import "server-only";
 import type { Organisation } from "@/entities/organisation";
 import { organisationUrl } from "@/shared/config";
+import { DEFAULT_LOCALE, getDictionaryFor } from "@/shared/i18n";
 import { escapeHtml, renderButton, renderEmailLayout, sendMail } from "@/shared/mail";
 
+// The invitee's language is unknown, so invitations use the platform's main language.
 export const sendWriterInvitation = async (organisation: Organisation, email: string) => {
+  const t = getDictionaryFor(DEFAULT_LOCALE).emails.writerInvite;
   const url = organisationUrl(organisation.slug, "/sign-in");
   await sendMail({
     to: email,
-    subject: `You were added as a writer for ${organisation.name}`,
-    text: `You can now upload newsletters and keep notes for ${organisation.name}. Sign in with this address: ${url}`,
+    subject: t.subject(organisation.name),
+    text: t.text(organisation.name, url),
     html: renderEmailLayout(
-      `Welcome to the ${organisation.name} team`,
-      `<p>You were added as a writer. You can now upload and schedule newsletters and keep notes for <strong>${escapeHtml(organisation.name)}</strong>.</p>
-      ${renderButton(url, "Sign in")}`,
+      t.heading(organisation.name),
+      `<p>${t.bodyHtml(escapeHtml(organisation.name))}</p>
+      ${renderButton(url, t.button)}`,
+      DEFAULT_LOCALE,
     ),
   });
 };
