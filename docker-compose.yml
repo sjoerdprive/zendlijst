@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: nieuwsbrief
+      POSTGRES_PASSWORD: nieuwsbrief
+      POSTGRES_DB: nieuwsbrief
+    ports:
+      - "5433:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  # Local SMTP catcher; web UI on http://localhost:8026
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "1026:1025"
+      - "8026:8025"
+
+volumes:
+  db-data:

@@ -1,0 +1,1 @@
+export { requireTeamAccess } from "./access";

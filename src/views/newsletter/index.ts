@@ -1,0 +1,1 @@
+export { NewsletterPageView } from "./NewsletterPageView";

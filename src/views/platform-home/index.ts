@@ -1,0 +1,1 @@
+export { PlatformHomeView } from "./PlatformHomeView";

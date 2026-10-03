@@ -1,0 +1,1 @@
+export { PlatformAdminView } from "./PlatformAdminView";

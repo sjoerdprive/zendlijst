@@ -1,0 +1,1 @@
+export { confirmSubscription } from "./confirm";
