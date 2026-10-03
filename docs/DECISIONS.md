@@ -81,7 +81,7 @@ less to build and secure, and fits "verify email through a magic link".
   people who asked for it (consent stays the organisation's responsibility).
 
 ## D8 — Newsletter content
-- Upload HTML or PDF, max 8 MB, stored in Postgres `bytea`. No object storage needed for an MVP;
+- Upload HTML or PDF, max 4 MB (Vercel caps request bodies at 4.5 MB), stored in Postgres `bytea`. No object storage needed for an MVP;
   moving to S3-compatible storage later only touches the newsletter entity's DAL.
 - HTML becomes the email body (with an unsubscribe footer injected). PDF is attached, with a short body.
 - In the browser, uploaded HTML is shown in a sandboxed iframe and served with a

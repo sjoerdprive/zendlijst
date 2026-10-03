@@ -1,6 +1,7 @@
 import type { NewsletterContentType, NewsletterStatus, NewsletterSummary } from "./types";
 
-export const MAX_NEWSLETTER_BYTES = 8 * 1024 * 1024;
+// Vercel rejects request bodies over 4.5 MB, so uploads stay under that.
+export const MAX_NEWSLETTER_BYTES = 4 * 1024 * 1024;
 
 export const NEWSLETTER_CONTENT_TYPES: Record<string, NewsletterContentType> = {
   ".html": "text/html",

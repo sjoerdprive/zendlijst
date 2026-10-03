@@ -15,11 +15,12 @@ export const sendMagicLinkEmail = async ({
 }: MagicLinkEmail): Promise<void> => {
   // The requester's language travels with the link request (see sendSignInLink).
   const locale = isLocale(metadata?.locale) ? metadata.locale : DEFAULT_LOCALE;
-  const t = getDictionaryFor(locale).emails.magicLink;
+  const dictionary = getDictionaryFor(locale);
+  const t = dictionary.emails.magicLink;
   const context =
     typeof metadata?.organisationName === "string"
       ? metadata.organisationName
-      : "Nieuwsbrief";
+      : dictionary.meta.title;
   const subject = t.subject(context);
   await sendMail({
     to: email,

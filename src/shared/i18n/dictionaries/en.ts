@@ -4,7 +4,7 @@ const plural = (count: number, one: string, many: string) => (count === 1 ? one 
 
 export const en: Dictionary = {
   meta: {
-    title: "Nieuwsbrief",
+    title: "Zendlijst",
     description: "Newsletters for organisations, with an archive for every subscriber.",
   },
   common: {
@@ -79,7 +79,7 @@ export const en: Dictionary = {
   },
   signIn: {
     platformTitle: "Platform sign-in",
-    platformDescription: "For Nieuwsbrief operators. Organisations sign in on their own subdomain.",
+    platformDescription: "For Zendlijst operators. Organisations sign in on their own subdomain.",
     tenantTitle: (name) => `Sign in to ${name}`,
     tenantDescription: "We email you a one-time link. No password needed.",
     linkError: "That sign-in link is invalid or expired. Request a new one.",
@@ -210,7 +210,7 @@ export const en: Dictionary = {
     summaryLabel: "Short summary (optional)",
     summaryHint: "Shown in the archive and in the email preview.",
     fileLabel: "Newsletter file",
-    fileHint: "HTML (sent as the email body) or PDF (sent as attachment). Max 8 MB.",
+    fileHint: "HTML (sent as the email body) or PDF (sent as attachment). Max 4 MB.",
     when: "When",
     modes: { schedule: "Schedule", now: "Send now", draft: "Save as draft" },
     publishAt: "Publish at",
@@ -233,8 +233,8 @@ export const en: Dictionary = {
     chooseFile: "Choose a file to upload.",
     unsupportedType: "Only HTML and PDF files are supported.",
     useHtmlOrPdf: "Use .html or .pdf",
-    tooLarge: "The file is larger than 8 MB.",
-    maxSize: "Max 8 MB",
+    tooLarge: "The file is larger than 4 MB.",
+    maxSize: "Max 4 MB",
     pickDateTime: "Pick a date and time.",
     alreadySending: "This newsletter is already being sent.",
     cannotDeleteSent: "Sent newsletters cannot be deleted.",

@@ -5,7 +5,7 @@ const plural = (count: number, one: string, many: string) => (count === 1 ? one 
 
 export const nl = {
   meta: {
-    title: "Nieuwsbrief",
+    title: "Zendlijst",
     description: "Nieuwsbrieven voor organisaties, met een archief voor elke abonnee.",
   },
   common: {
@@ -83,7 +83,7 @@ export const nl = {
   },
   signIn: {
     platformTitle: "Inloggen voor beheer",
-    platformDescription: "Voor beheerders van Nieuwsbrief. Organisaties loggen in op hun eigen subdomein.",
+    platformDescription: "Voor beheerders van Zendlijst. Organisaties loggen in op hun eigen subdomein.",
     tenantTitle: (name: string) => `Inloggen bij ${name}`,
     tenantDescription: "We mailen je een eenmalige link. Geen wachtwoord nodig.",
     linkError: "Die inloglink is ongeldig of verlopen. Vraag een nieuwe aan.",
@@ -216,7 +216,7 @@ export const nl = {
     summaryLabel: "Korte samenvatting (optioneel)",
     summaryHint: "Zichtbaar in het archief en in het voorbeeld van de e-mail.",
     fileLabel: "Nieuwsbriefbestand",
-    fileHint: "HTML (verstuurd als inhoud van de e-mail) of PDF (verstuurd als bijlage). Max. 8 MB.",
+    fileHint: "HTML (verstuurd als inhoud van de e-mail) of PDF (verstuurd als bijlage). Max. 4 MB.",
     when: "Wanneer",
     modes: { schedule: "Inplannen", now: "Nu versturen", draft: "Opslaan als concept" },
     publishAt: "Publiceren op",
@@ -239,8 +239,8 @@ export const nl = {
     chooseFile: "Kies een bestand om te uploaden.",
     unsupportedType: "Alleen HTML- en PDF-bestanden worden ondersteund.",
     useHtmlOrPdf: "Gebruik .html of .pdf",
-    tooLarge: "Het bestand is groter dan 8 MB.",
-    maxSize: "Max. 8 MB",
+    tooLarge: "Het bestand is groter dan 4 MB.",
+    maxSize: "Max. 4 MB",
     pickDateTime: "Kies een datum en tijd.",
     alreadySending: "Deze nieuwsbrief wordt al verstuurd.",
     cannotDeleteSent: "Verstuurde nieuwsbrieven kunnen niet worden verwijderd.",

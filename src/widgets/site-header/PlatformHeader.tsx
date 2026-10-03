@@ -8,7 +8,7 @@ export const PlatformHeader = async () => {
   const isAdmin = isPlatformAdmin(sessionUser);
   return (
     <SiteHeader
-      brand="Nieuwsbrief"
+      brand={t.meta.title}
       links={isAdmin ? [{ href: "/platform-admin", label: t.header.requests }] : []}
       trailing={isAdmin ? <SignOutButton /> : undefined}
     />

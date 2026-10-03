@@ -1,4 +1,4 @@
-# Nieuwsbrief
+# Zendlijst
 
 Multi-tenant newsletter platform. Organisations get their own subdomain where people
 subscribe with a magic link, read the archive and choose whether new issues arrive by email.

@@ -30,6 +30,9 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // API routes (auth, cron, one-click unsubscribe) are host-aware themselves.
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
+  // API routes (auth, cron, one-click unsubscribe) are host-aware themselves;
+  // the PWA files are shared by every host and served from the app root.
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|offline.html|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+  ],
 };

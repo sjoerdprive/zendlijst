@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import { I18nProvider } from "@/shared/i18n";
 import { getDictionary, getLocale } from "@/shared/i18n/server";
+import { ServiceWorkerRegistrar } from "@/shared/pwa";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -19,9 +20,21 @@ const fraunces = Fraunces({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#faf6ee" },
+    { media: "(prefers-color-scheme: dark)", color: "#11141c" },
+  ],
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getDictionary();
-  return { title: t.meta.title, description: t.meta.description };
+  return {
+    title: t.meta.title,
+    description: t.meta.description,
+    applicationName: t.meta.title,
+    appleWebApp: { capable: true, title: t.meta.title, statusBarStyle: "default" },
+  };
 }
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -33,6 +46,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="flex min-h-full flex-col bg-paper text-ink">
         <I18nProvider locale={locale}>{children}</I18nProvider>
+        <ServiceWorkerRegistrar />
       </body>
     </html>
   );
