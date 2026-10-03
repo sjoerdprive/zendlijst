@@ -214,6 +214,7 @@ export const en: Dictionary = {
     when: "When",
     modes: { schedule: "Schedule", now: "Send now", draft: "Save as draft" },
     publishAt: "Publish at",
+    publishAtHint: "Scheduled newsletters go out every morning, once the chosen moment has passed.",
     submit: "Upload newsletter",
     pending: "Uploading…",
     emptyTitle: "No newsletters yet.",

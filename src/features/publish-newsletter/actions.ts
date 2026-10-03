@@ -1,6 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
 import { authorizeMember } from "@/entities/membership/server";
 import {
@@ -16,6 +17,7 @@ import { requireCurrentOrganisation } from "@/entities/organisation/server";
 import type { Dictionary } from "@/shared/i18n";
 import { getDictionary } from "@/shared/i18n/server";
 import { actionError, actionSuccess, fieldErrors, type ActionState } from "@/shared/lib";
+import { triggerDispatch } from "./triggerDispatch";
 
 const authorizeTeam = async () => {
   const organisation = await requireCurrentOrganisation();
@@ -83,7 +85,10 @@ export const uploadNewsletterAction = async (
   });
   refresh();
 
-  if (mode === "now") return actionSuccess(t.newsletters.sendingStarted);
+  if (mode === "now") {
+    after(triggerDispatch);
+    return actionSuccess(t.newsletters.sendingStarted);
+  }
   if (mode === "draft") return actionSuccess(t.newsletters.savedDraft);
   return actionSuccess(t.newsletters.scheduled);
 };

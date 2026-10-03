@@ -43,7 +43,7 @@ export const UploadNewsletterForm = () => {
         </div>
       </fieldset>
       <div className="hidden group-has-[input[value=schedule]:checked]:block">
-        <Field label={t.newsletters.publishAt} name="scheduledAt" errors={errors?.scheduledAt}>
+        <Field label={t.newsletters.publishAt} name="scheduledAt" hint={t.newsletters.publishAtHint} errors={errors?.scheduledAt}>
           <DateTimeInput id="scheduledAt" name="scheduledAt" />
         </Field>
       </div>

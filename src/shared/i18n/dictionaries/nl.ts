@@ -220,6 +220,7 @@ export const nl = {
     when: "Wanneer",
     modes: { schedule: "Inplannen", now: "Nu versturen", draft: "Opslaan als concept" },
     publishAt: "Publiceren op",
+    publishAtHint: "Ingeplande nieuwsbrieven worden elke ochtend verstuurd, zodra het gekozen moment voorbij is.",
     submit: "Nieuwsbrief uploaden",
     pending: "Uploaden…",
     emptyTitle: "Nog geen nieuwsbrieven.",
