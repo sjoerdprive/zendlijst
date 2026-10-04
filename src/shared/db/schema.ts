@@ -216,6 +216,23 @@ export const newsletter = pgTable(
   ],
 );
 
+// First time a member opened an issue in the archive. One row per member and
+// issue; only totals are shown. Removed with the membership (unsubscribe).
+export const newsletterRead = pgTable(
+  "newsletter_read",
+  {
+    id: id(),
+    newsletterId: text("newsletter_id")
+      .notNull()
+      .references(() => newsletter.id, { onDelete: "cascade" }),
+    membershipId: text("membership_id")
+      .notNull()
+      .references(() => membership.id, { onDelete: "cascade" }),
+    readAt: timestamp("read_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("newsletter_read_newsletter_membership_idx").on(table.newsletterId, table.membershipId)],
+);
+
 export const deliveryStatus = pgEnum("delivery_status", [
   "pending",
   "sent",

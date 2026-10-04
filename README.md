@@ -98,6 +98,19 @@ admin approval (`approval`, requests appear on the Subscribers page), or nobody 
 (`closed`, admins add subscribers manually). Pending requests live in `subscription_request` and never grant
 archive access.
 
+## Metrics
+
+Team → Statistieken shows per sent issue: recipients, delivered (with delivery rate), failed and how many
+members opened it in the archive (`newsletter_read`, one row per member and issue, removed on unsubscribe).
+Emails themselves are not tracked: no pixels, no redirected links.
+
+## Privacy & terms
+
+`/privacy` (on the root domain and every organisation subdomain, linked in the footer, the subscribe form and
+every newsletter email) describes the data processed, the security measures, the hosting locations and where
+our influence ends. Copy lives in the `legal` section of the dictionaries; keep it in sync with the code.
+The operator name/KvK number is still a placeholder.
+
 ## Security
 
 - Strict nonce-based Content Security Policy on every page (set in `src/proxy.ts`), plus

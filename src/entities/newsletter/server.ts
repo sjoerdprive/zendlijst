@@ -1,4 +1,5 @@
 export {
+  countNewsletterReads,
   createNewsletter,
   deleteNewsletter,
   getNewsletter,
@@ -7,5 +8,6 @@ export {
   getNextScheduledNewsletter,
   listAllNewsletters,
   listPublishedNewsletters,
+  recordNewsletterRead,
   setNewsletterSchedule,
 } from "./dal";

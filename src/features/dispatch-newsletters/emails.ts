@@ -25,11 +25,12 @@ interface NewsletterEmailInput {
   unsubscribeToken: string;
 }
 
-const footerHtml = (organisationName: string, readUrl: string, unsubscribeUrl: string) => `
+const footerHtml = (organisationName: string, readUrl: string, unsubscribeUrl: string, privacyUrl: string) => `
 <div style="margin:32px auto 0;max-width:560px;padding:16px;border-top:1px solid ${EMAIL_COLORS.line};font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${EMAIL_COLORS.muted};text-align:center">
   ${t.footerReasonHtml(escapeHtml(organisationName))}<br>
   <a href="${escapeHtml(readUrl)}" style="color:${EMAIL_COLORS.brand}">${escapeHtml(t.readOnline)}</a> ·
-  <a href="${escapeHtml(unsubscribeUrl)}" style="color:${EMAIL_COLORS.muted}">${escapeHtml(t.unsubscribe)}</a>
+  <a href="${escapeHtml(unsubscribeUrl)}" style="color:${EMAIL_COLORS.muted}">${escapeHtml(t.unsubscribe)}</a> ·
+  <a href="${escapeHtml(privacyUrl)}" style="color:${EMAIL_COLORS.muted}">${escapeHtml(t.privacy)}</a>
 </div>`;
 
 // Uploaded HTML is sent as-is (it comes from the organisation's own team) with
@@ -58,7 +59,12 @@ export const buildNewsletterEmail = ({
     `/api/unsubscribe?token=${encodeURIComponent(unsubscribeToken)}`,
   );
   const subject = `${organisation.name}: ${newsletter.title}`;
-  const footer = footerHtml(organisation.name, readUrl, unsubscribeUrl);
+  const footer = footerHtml(
+    organisation.name,
+    readUrl,
+    unsubscribeUrl,
+    organisationUrl(organisation.slug, "/privacy"),
+  );
   const text = [
     newsletter.title,
     summary ?? "",

@@ -7,5 +7,6 @@ export { FormMessage } from "./FormMessage";
 export { CodeInput, Input, Select, Textarea } from "./inputs";
 export { Notice } from "./Notice";
 export { PageContainer } from "./PageContainer";
+export { StatTile } from "./StatTile";
 export { SubmitButton } from "./SubmitButton";
 export type * from "./types";

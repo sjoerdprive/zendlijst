@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { after } from "next/server";
 import { notFound, redirect } from "next/navigation";
 import { isTeamRole } from "@/entities/membership";
 import { getViewer } from "@/entities/membership/server";
 import { isPublished, NewsletterStatusBadge, publishedAt } from "@/entities/newsletter";
-import { getNewsletter } from "@/entities/newsletter/server";
+import { getNewsletter, recordNewsletterRead } from "@/entities/newsletter/server";
 import { requireCurrentOrganisation } from "@/entities/organisation/server";
 import { NewsletterViewer } from "@/features/read-newsletter";
 import { getDictionary, getLocale } from "@/shared/i18n/server";
@@ -24,6 +25,12 @@ export const NewsletterPageView = async ({ newsletterId }: NewsletterViewProps) 
   ]);
   const canPreview = isTeamRole(viewer.membership.role);
   if (!newsletter || (!isPublished(newsletter.status) && !canPreview)) notFound();
+
+  // Previews of unpublished issues by the team are not reads.
+  if (isPublished(newsletter.status)) {
+    const membershipId = viewer.membership.id;
+    after(() => recordNewsletterRead(newsletter.id, membershipId));
+  }
 
   const date = publishedAt(newsletter);
   return (

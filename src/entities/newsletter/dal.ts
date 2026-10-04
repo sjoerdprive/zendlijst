@@ -1,6 +1,6 @@
 import "server-only";
 import { and, asc, desc, eq, gt, inArray, sql } from "drizzle-orm";
-import { getDb, newsletter } from "@/shared/db";
+import { getDb, newsletter, newsletterRead } from "@/shared/db";
 import type {
   NewNewsletter,
   NewsletterContentType,
@@ -167,4 +167,20 @@ export const getNewsletterForDelivery = async (
     .where(eq(newsletter.id, newsletterId))
     .limit(1);
   return row ? { ...row, contentType: row.contentType as NewsletterContentType } : null;
+};
+
+// Counted once per member; repeat visits are ignored.
+export const recordNewsletterRead = async (newsletterId: string, membershipId: string): Promise<void> => {
+  await getDb().insert(newsletterRead).values({ newsletterId, membershipId }).onConflictDoNothing();
+};
+
+// Number of members who opened each issue in the archive, by newsletter id.
+export const countNewsletterReads = async (organisationId: string): Promise<Record<string, number>> => {
+  const rows = await getDb()
+    .select({ newsletterId: newsletterRead.newsletterId, readers: sql<number>`count(*)::int` })
+    .from(newsletterRead)
+    .innerJoin(newsletter, eq(newsletter.id, newsletterRead.newsletterId))
+    .where(eq(newsletter.organisationId, organisationId))
+    .groupBy(newsletterRead.newsletterId);
+  return Object.fromEntries(rows.map(({ newsletterId, readers }) => [newsletterId, readers]));
 };

@@ -9,10 +9,9 @@ import { ShareSubscribeCard } from "@/features/share-subscribe-link";
 import { organisationUrl } from "@/shared/config";
 import { getDictionary, getLocale } from "@/shared/i18n/server";
 import { formatDate } from "@/shared/lib";
-import { buttonClasses, Notice } from "@/shared/ui";
+import { buttonClasses, Notice, StatTile } from "@/shared/ui";
 import { TeamShell } from "@/widgets/team-shell";
 import { requireTeamAccess } from "@/widgets/team-shell/server";
-import { StatTile } from "./StatTile";
 
 export const TeamOverviewView = async () => {
   const { organisation, role } = await requireTeamAccess();

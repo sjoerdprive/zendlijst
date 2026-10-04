@@ -10,6 +10,7 @@ const ITEMS: TeamNavItem[] = [
   { href: "/team", labelKey: "overview", adminOnly: false },
   { href: "/team/newsletters", labelKey: "newsletters", adminOnly: false },
   { href: "/team/notes", labelKey: "notes", adminOnly: false },
+  { href: "/team/metrics", labelKey: "metrics", adminOnly: false },
   { href: "/team/subscribers", labelKey: "subscribers", adminOnly: true },
   { href: "/team/writers", labelKey: "writers", adminOnly: true },
   { href: "/team/organisation", labelKey: "organisation", adminOnly: true },

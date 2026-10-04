@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useRef } from "react";
 import { useDictionary } from "@/shared/i18n";
 import { IDLE_STATE } from "@/shared/lib";
@@ -39,7 +40,12 @@ export const SubscribeEmailForm = ({ requiresApproval, onSent }: SubscribeEmailF
       <SubmitButton pendingLabel={t.subscribe.pending} className="w-full">
         {requiresApproval ? t.subscribe.submitRequest : t.subscribe.submit}
       </SubmitButton>
-      <p className="text-xs text-muted">{t.subscribe.privacy}</p>
+      <p className="text-xs text-muted">
+        {t.subscribe.privacy}{" "}
+        <Link href="/privacy" className="font-medium text-brand underline underline-offset-2">
+          {t.subscribe.privacyLink}
+        </Link>
+      </p>
     </form>
   );
 };

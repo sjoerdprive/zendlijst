@@ -147,6 +147,7 @@ export const nl = {
     closed: "Aanmelden is op dit moment niet mogelijk.",
     privacy:
       "We mailen je een link om je adres te bevestigen. Je e-mailadres wordt versleuteld opgeslagen en alleen voor deze nieuwsbrief gebruikt.",
+    privacyLink: "Zo beschermen we je gegevens",
     success: "Bijna klaar! We hebben je een e-mail gestuurd met een link en een code. Bevestig je aanmelding met een van beide.",
     codeSubmit: "Bevestigen met code",
   },
@@ -206,6 +207,7 @@ export const nl = {
     subscribers: "Abonnees",
     writers: "Schrijvers",
     organisation: "Organisatie",
+    metrics: "Statistieken",
   },
   overview: {
     title: "Overzicht",
@@ -397,6 +399,172 @@ export const nl = {
     dismiss: "Niet nu",
     iosHint: "Tik op het deelicoon en kies ‘Zet op beginscherm’.",
   },
+  metrics: {
+    title: "Statistieken",
+    description: "Hoe je verstuurde nieuwsbrieven aankomen en gelezen worden.",
+    members: "Leden",
+    membersHint: (count: number) => `${count} ${plural(count, "ontvangt", "ontvangen")} e-mail`,
+    issues: "Verstuurde edities",
+    delivered: "Bezorgd",
+    deliveredHint: (sent: number, total: number) => `${sent} van ${total} e-mails`,
+    readers: "Gem. online gelezen",
+    readersHint: (share: string) => `${share} van je leden per editie`,
+    tableTitle: "Per editie",
+    columns: {
+      issue: "Editie",
+      recipients: "Ontvangers",
+      delivered: "Bezorgd",
+      failed: "Mislukt",
+      readers: "Online gelezen",
+    },
+    pending: (count: number) => `${count} in de wachtrij`,
+    deliveryRate: (title: string) => `Bezorgpercentage van ${title}`,
+    emptyTitle: "Nog geen verstuurde edities.",
+    emptyBody: "Zodra je eerste nieuwsbrief is verstuurd, zie je hier hoe hij aankwam.",
+    note: "‘Online gelezen’ telt leden die de editie in het archief openden, één keer per lid. E-mails zelf volgen we niet: wie alleen in de inbox leest, telt hier niet mee.",
+  },
+  footer: {
+    privacy: "Privacy & voorwaarden",
+    tagline: "Nieuwsbrieven voor organisaties",
+  },
+  legal: {
+    title: "Privacy & voorwaarden",
+    intro:
+      "Hier lees je welke gegevens Zendlijst verwerkt, hoe we ze beveiligen en waar onze invloed ophoudt. We houden het concreet: alles wat hier staat, is hoe het platform echt werkt.",
+    updated: "Laatst bijgewerkt: 4 oktober 2026",
+    contents: "Inhoud",
+    sections: [
+      {
+        id: "wie",
+        title: "Wie we zijn",
+        body: [
+          "Zendlijst is een platform waarmee organisaties nieuwsbrieven versturen en een archief bijhouden voor hun abonnees. Zendlijst wordt geëxploiteerd door [naam exploitant, KvK-nummer].",
+          "Vragen over privacy of dit document? Mail naar privacy@zendlijst.nl.",
+        ],
+        items: [],
+      },
+      {
+        id: "rollen",
+        title: "Wie is verantwoordelijk",
+        body: [
+          "Elke organisatie bepaalt zelf wie op haar lijst staat en wat ze verstuurt. Voor de gegevens van abonnees en de inhoud van nieuwsbrieven is de organisatie daarom de verwerkingsverantwoordelijke in de zin van de AVG. Zendlijst is de verwerker: we slaan die gegevens op en versturen e-mails in opdracht van de organisatie.",
+          "Voor gegevens die we zelf nodig hebben om het platform te laten werken, zoals aanvragen van nieuwe organisaties en inlogsessies, is Zendlijst verantwoordelijk.",
+        ],
+        items: [],
+      },
+      {
+        id: "gegevens",
+        title: "Welke gegevens we verwerken",
+        body: [],
+        items: [
+          "Je e-mailadres, je rol (abonnee, schrijver of beheerder), of je nieuwe edities per e-mail wilt ontvangen en sinds wanneer je lid bent.",
+          "Voor het versturen: per e-mail de status (verstuurd, mislukt), het aantal pogingen, een eventuele foutmelding van de mailserver en het tijdstip.",
+          "Welke leden een editie in het archief hebben geopend (de eerste keer). Teams zien hiervan alleen totalen, nooit wie wat heeft gelezen.",
+          "Aanvragen om lid te worden, als een organisatie aanmeldingen eerst wil goedkeuren.",
+          "Voor teams: geüploade nieuwsbrieven en interne notities.",
+          "Bij een aanvraag voor een nieuwe organisatie: de naam, het gewenste subdomein, het e-mailadres van de beheerder en je eventuele toelichting.",
+          "Bij inloggen: een sessie met het IP-adres en de browser waarmee je inlogde, zodat we misbruik kunnen herkennen.",
+        ],
+      },
+      {
+        id: "niet",
+        title: "Wat we niet doen",
+        body: [],
+        items: [
+          "We verkopen of delen geen gegevens voor reclame.",
+          "We gebruiken geen analyse- of trackingdiensten op de website.",
+          "We voegen geen trackingpixels of omgeleide links toe aan e-mails. We weten dus niet of iemand een e-mail opent.",
+          "We gebruiken geen wachtwoorden, dus er kunnen ook geen wachtwoorden uitlekken.",
+        ],
+      },
+      {
+        id: "beveiliging",
+        title: "Hoe we je gegevens beveiligen",
+        body: [],
+        items: [
+          "E-mailadressen staan versleuteld in de database (AES-256-GCM). Om een adres terug te vinden gebruiken we een sleutel-gebaseerde hash (HMAC), zodat het adres zelf nergens leesbaar is opgeslagen. De sleutels staan los van de database.",
+          "Inloggen gaat met een eenmalige link of een code van 6 cijfers. Beide zijn 15 minuten geldig, werken maar één keer en worden gehasht opgeslagen. Na 5 verkeerde codes is een code geblokkeerd, en het aantal aanvragen per adres en per IP-adres is begrensd.",
+          "Je sessie staat in een beveiligde cookie die alleen voor dat ene subdomein geldt: inloggen bij de ene organisatie geeft geen toegang tot een andere.",
+          "Alle verbindingen met de website lopen via HTTPS.",
+          "Alleen leden zien het archief. Teampagina's zijn per rol afgeschermd, en bij elke actie controleert de server opnieuw of je die mag uitvoeren. Welke organisatie je bekijkt, bepaalt de server op basis van het adres, nooit op basis van wat een formulier meestuurt.",
+          "Een strikt Content Security Policy zorgt dat alleen onze eigen scripts op de website draaien. Geüploade HTML-nieuwsbrieven worden opgeschoond (scripts, formulieren en verborgen doorverwijzingen eruit) en in een afgeschermde omgeving getoond. Van PDF's controleren we of het echt PDF's zijn.",
+          "Alle databasevragen gebruiken vaste parameters, zodat ingevoerde tekst nooit als opdracht kan worden uitgevoerd.",
+        ],
+      },
+      {
+        id: "partijen",
+        title: "Waar je gegevens staan",
+        body: [
+          "We werken met drie dienstverleners en kiezen waar mogelijk voor verwerking in de Europese Unie. Het zijn Amerikaanse bedrijven; zie hun eigen privacyverklaringen voor hoe zij met gegevens omgaan.",
+        ],
+        items: [
+          "Vercel: draait de website en de server, in Frankfurt (Duitsland). Bestanden zoals afbeeldingen kunnen via hun wereldwijde netwerk worden geleverd.",
+          "Neon: de database, in Frankfurt (Duitsland).",
+          "Resend: verstuurt de e-mails, vanuit Ierland.",
+        ],
+      },
+      {
+        id: "email",
+        title: "Waar onze invloed ophoudt: e-mail",
+        body: [
+          "Een e-mail is niet hetzelfde als een pagina in het archief. Zodra wij een nieuwsbrief aan onze maildienst overdragen, gaat hij naar de mailserver van de ontvanger. Vanaf dat moment hebben wij en de organisatie er geen controle meer over.",
+        ],
+        items: [
+          "Onze verbinding met de maildienst is versleuteld. De maildienst versleutelt de verbinding met de mailserver van de ontvanger als die server dat ondersteunt; dat kunnen we niet afdwingen.",
+          "De e-mailprovider van de ontvanger (bijvoorbeeld Gmail of Outlook) bewaart en verwerkt de e-mail onder zijn eigen voorwaarden, en kan afbeeldingen vooraf laden of de inhoud scannen.",
+          "Doorsturen, afdrukken, schermafbeeldingen of een gehackte mailbox vallen buiten ons bereik. Een PDF in de bijlage blijft in de mailbox staan, ook als je je later afmeldt.",
+          "Afbeeldingen en links in een nieuwsbrief komen van de organisatie zelf. Als die van een externe server komen, kan die server zien dat de afbeelding is geladen. Zendlijst voegt zelf niets toe, maar controleert ook niet waar een organisatie haar afbeeldingen host.",
+          "Elke nieuwsbrief bevat een afmeldlink, en e-mailprogramma's kunnen met één klik afmelden. Afmelden stopt nieuwe e-mails, maar haalt al bezorgde e-mails niet terug.",
+        ],
+      },
+      {
+        id: "bewaren",
+        title: "Hoe lang we gegevens bewaren",
+        body: [],
+        items: [
+          "Je lidmaatschap blijft bestaan tot je je afmeldt of een beheerder je verwijdert. Daarmee verdwijnen ook je leesgegevens voor die organisatie.",
+          "Je account (alleen je versleutelde e-mailadres) blijft bestaan zodat je je later opnieuw kunt aanmelden. Wil je dat het helemaal wordt verwijderd, mail dan naar privacy@zendlijst.nl.",
+          "Verzendgegevens, inclusief het versleutelde adres van de ontvanger, bewaren we bij de nieuwsbrief, zodat een organisatie mislukte e-mails kan opvolgen. Ze worden verwijderd met de nieuwsbrief of de organisatie.",
+          "Inlogsessies verlopen na 30 dagen; inloglinks en codes na 15 minuten.",
+          "Als een organisatie wordt opgeheven, verwijderen we haar abonnees, nieuwsbrieven, notities en verzendgegevens.",
+        ],
+      },
+      {
+        id: "cookies",
+        title: "Cookies",
+        body: [
+          "We gebruiken alleen wat nodig is om de site te laten werken, dus er is geen cookiemelding nodig:",
+        ],
+        items: [
+          "Een sessiecookie zodat je ingelogd blijft (maximaal 30 dagen).",
+          "Een taalcookie die onthoudt of je Nederlands of Engels kiest (1 jaar).",
+          "In je browser onthouden we 30 dagen dat je de melding ‘zet deze app op je telefoon’ hebt weggeklikt.",
+        ],
+      },
+      {
+        id: "rechten",
+        title: "Je rechten",
+        body: [
+          "Je kunt je gegevens inzien, laten corrigeren of verwijderen, en bezwaar maken tegen het gebruik ervan. Afmelden kan altijd zelf, via de link in elke e-mail of via Instellingen. Voor gegevens bij een organisatie kun je het beste eerst die organisatie benaderen; je kunt ook mailen naar privacy@zendlijst.nl, dan helpen wij.",
+          "Ben je het niet eens met hoe we met je gegevens omgaan, dan kun je een klacht indienen bij de Autoriteit Persoonsgegevens.",
+        ],
+        items: [],
+      },
+      {
+        id: "voorwaarden",
+        title: "Voorwaarden voor organisaties",
+        body: [],
+        items: [
+          "Je verstuurt alleen nieuwsbrieven naar mensen die zich zelf hebben aangemeld of daar aantoonbaar toestemming voor gaven. Zendlijst is niet bedoeld voor ongevraagde e-mail.",
+          "Je bent verantwoordelijk voor de inhoud van je nieuwsbrieven en voor externe afbeeldingen en links daarin.",
+          "Ingeplande nieuwsbrieven worden op de gekozen dag tussen 8:00 en 9:00 (Nederlandse tijd) verstuurd. We doen ons best om de dienst beschikbaar te houden, maar kunnen geen ononderbroken beschikbaarheid of bezorging garanderen: de ontvangende mailserver beslist uiteindelijk.",
+          "Bij misbruik, zoals spam of schadelijke inhoud, kunnen we een organisatie blokkeren.",
+          "Wijzigen we deze voorwaarden op een belangrijk punt, dan laten we dat beheerders vooraf weten.",
+          "Op deze voorwaarden is Nederlands recht van toepassing.",
+        ],
+      },
+    ],
+  },
   roles: {
     admin: "beheerder",
     writer: "schrijver",
@@ -406,6 +574,7 @@ export const nl = {
     footerReasonHtml: (nameHtml: string) => `Je ontvangt dit omdat je je hebt aangemeld voor ${nameHtml}.`,
     readOnline: "Online lezen",
     unsubscribe: "Afmelden",
+    privacy: "Privacy",
     pdfAttachedHtml: (nameHtml: string) => `De nieuwe editie van ${nameHtml} zit als pdf in de bijlage.`,
     magicLink: {
       subject: (context: string) => `Je inloglink voor ${context}`,

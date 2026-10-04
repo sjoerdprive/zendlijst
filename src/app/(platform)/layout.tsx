@@ -1,3 +1,4 @@
+import { SiteFooter } from "@/widgets/site-footer";
 import { PlatformHeader } from "@/widgets/site-header";
 
 export default function PlatformLayout({ children }: LayoutProps<"/">) {
@@ -5,6 +6,7 @@ export default function PlatformLayout({ children }: LayoutProps<"/">) {
     <>
       <PlatformHeader />
       {children}
+      <SiteFooter />
     </>
   );
 }

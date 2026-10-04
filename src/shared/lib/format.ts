@@ -23,3 +23,15 @@ export const formatDate = (value: Date, locale: Locale): string =>
 // e.g. "zaterdag 10 oktober 2026"
 export const formatWeekdayDate = (value: Date, locale: Locale): string =>
   formatterFor(locale, { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(value);
+
+const percentFormats = new Map<Locale, Intl.NumberFormat>();
+
+// 0.934 -> "93%" / "93 %" depending on the locale.
+export const formatPercent = (ratio: number, locale: Locale): string => {
+  let format = percentFormats.get(locale);
+  if (!format) {
+    format = new Intl.NumberFormat(INTL_LOCALES[locale], { style: "percent", maximumFractionDigits: 0 });
+    percentFormats.set(locale, format);
+  }
+  return format.format(ratio);
+};
