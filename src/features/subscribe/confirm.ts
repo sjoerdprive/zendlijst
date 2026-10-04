@@ -1,8 +1,8 @@
 import "server-only";
 import type { NextRequest } from "next/server";
-import { ensureSubscription } from "@/entities/membership/server";
 import { getCurrentOrganisation } from "@/entities/organisation/server";
 import { getSessionUser } from "@/shared/auth";
+import { homeQueryFor, joinOrganisation } from "./join";
 import { isValidSubscribeToken } from "./utils";
 
 // Relative Location keeps the browser on the tenant's subdomain; `request.url`
@@ -23,6 +23,5 @@ export const confirmSubscription = async (request: NextRequest): Promise<Respons
     return redirectHome("error=confirm");
   }
 
-  await ensureSubscription(organisation.id, sessionUser.id, notify);
-  return redirectHome("welcome=1");
+  return redirectHome(homeQueryFor(await joinOrganisation(organisation, sessionUser.id, notify)));
 };

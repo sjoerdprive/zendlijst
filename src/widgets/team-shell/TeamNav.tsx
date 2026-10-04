@@ -12,6 +12,7 @@ const ITEMS: TeamNavItem[] = [
   { href: "/team/notes", labelKey: "notes", adminOnly: false },
   { href: "/team/subscribers", labelKey: "subscribers", adminOnly: true },
   { href: "/team/writers", labelKey: "writers", adminOnly: true },
+  { href: "/team/organisation", labelKey: "organisation", adminOnly: true },
 ];
 
 // Strips the internal "/t/<slug>" prefix in case the rewritten path leaks through.

@@ -39,3 +39,14 @@ export type AddMemberResult =
 export interface RoleBadgeProps {
   role: MemberRole;
 }
+
+export interface SubscriptionRequest {
+  id: string;
+  email: string;
+  emailNotifications: boolean;
+  createdAt: Date;
+}
+
+export interface ApprovedRequest {
+  email: string | null;
+}

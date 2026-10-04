@@ -9,4 +9,5 @@ export {
   listOrganisationRequests,
   rejectOrganisationRequest,
   requireCurrentOrganisation,
+  setSubscriptionMode,
 } from "./dal";

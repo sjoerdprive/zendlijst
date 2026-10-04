@@ -1,8 +1,8 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
-import { ensureSubscription } from "@/entities/membership/server";
 import { requireCurrentOrganisation } from "@/entities/organisation/server";
 import { getSessionUser, sendSignInLink } from "@/shared/auth";
 import { emailBlindIndex } from "@/shared/crypto";
@@ -16,6 +16,7 @@ import {
   type ActionState,
 } from "@/shared/lib";
 import { allowRequest } from "@/shared/lib/server";
+import { homeQueryFor, joinOrganisation } from "./join";
 import { createSubscribeToken } from "./utils";
 
 const subscribeSchema = (t: Dictionary) =>
@@ -29,6 +30,9 @@ export const subscribeAction = async (
   formData: FormData,
 ): Promise<ActionState> => {
   const t = await getDictionary();
+  const organisation = await requireCurrentOrganisation();
+  if (organisation.subscriptionMode === "closed") return actionError(t.subscribe.closed);
+
   const parsed = subscribeSchema(t).safeParse({
     email: formData.get("email"),
     notify: formData.get("notify") ?? undefined,
@@ -43,7 +47,6 @@ export const subscribeAction = async (
     return actionError(t.common.tooManyAttempts);
   }
 
-  const organisation = await requireCurrentOrganisation();
   const params = new URLSearchParams({
     notify: notify ? "1" : "0",
     token: createSubscribeToken(email, notify),
@@ -53,7 +56,9 @@ export const subscribeAction = async (
     callbackPath: `/subscribe/confirm?${params.toString()}`,
     organisationName: organisation.name,
   });
-  return actionSuccess(t.subscribe.success);
+  return actionSuccess(
+    organisation.subscriptionMode === "approval" ? t.subscribe.successApproval : t.subscribe.success,
+  );
 };
 
 // For visitors who are already signed in (their email is verified) but are not
@@ -62,6 +67,7 @@ export const subscribeSignedInAction = async (formData: FormData): Promise<void>
   const organisation = await requireCurrentOrganisation();
   const sessionUser = await getSessionUser();
   if (!sessionUser) return;
-  await ensureSubscription(organisation.id, sessionUser.id, formData.get("notify") === "on");
+  const result = await joinOrganisation(organisation, sessionUser.id, formData.get("notify") === "on");
+  if (result !== "joined") redirect(`/?${homeQueryFor(result)}`);
   refresh();
 };

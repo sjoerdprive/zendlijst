@@ -1,3 +1,7 @@
+import type { SubscriptionMode } from "./types";
+
+export const SUBSCRIPTION_MODES: SubscriptionMode[] = ["open", "approval", "closed"];
+
 export const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{1,30}[a-z0-9])$/;
 
 // Subdomains we keep for the platform itself.

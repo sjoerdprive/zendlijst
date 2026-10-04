@@ -1,7 +1,10 @@
+export type SubscriptionMode = "open" | "approval" | "closed";
+
 export interface Organisation {
   id: string;
   slug: string;
   name: string;
+  subscriptionMode: SubscriptionMode;
 }
 
 export type OrganisationRequestStatus = "pending" | "approved" | "rejected";

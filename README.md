@@ -82,3 +82,27 @@ Each slice exposes a client-safe `index.ts` and, where it has data access, a ser
   invitations, welcome emails) are sent in Dutch, because the recipient's preference is unknown.
 - Colours are design tokens in `src/app/globals.css` (Delft blue, Dutch orange, warm paper), with a dark-mode set.
   Components use them via Tailwind classes such as `bg-surface`, `text-muted` and `bg-brand`.
+
+## Scheduling
+
+- Newsletters are scheduled per day, not per minute: they go out on the chosen date between 08:00 and 09:00
+  Dutch time. Two daily Vercel crons (06:00 and 07:00 UTC) make that hold in both summer and winter time;
+  the delivery moment is stored as 08:00 Europe/Amsterdam (`src/entities/newsletter/schedule.ts`).
+- "Send now" does not wait for the cron: it triggers the dispatcher right after the upload.
+- All dates in the UI are shown in Dutch time (`APP_TIME_ZONE` in `src/shared/lib/format.ts`).
+
+## Subscription policy
+
+Organisation admins choose under Team → Organisation who can subscribe: anyone (`open`), anyone after
+admin approval (`approval`, requests appear on the Subscribers page), or nobody through the site
+(`closed`, admins add subscribers manually). Pending requests live in `subscription_request` and never grant
+archive access.
+
+## Security
+
+- Strict nonce-based Content Security Policy on every page (set in `src/proxy.ts`), plus
+  `Permissions-Policy`, `X-Frame-Options`, `nosniff` and `Cross-Origin-Opener-Policy` headers.
+- Uploaded HTML is sanitised with DOMPurify (scripts, event handlers, `javascript:` URLs, frames and forms
+  removed) and served in a script-less sandbox; PDFs must start with a real PDF signature.
+- All database access goes through Drizzle with bound parameters; React escapes all rendered text and
+  emails escape every interpolated value.

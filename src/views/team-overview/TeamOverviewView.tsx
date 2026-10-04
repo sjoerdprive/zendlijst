@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { listUnresolvedFailures } from "@/entities/delivery/server";
-import { listMembers } from "@/entities/membership/server";
+import { countSubscriptionRequests, listMembers } from "@/entities/membership/server";
+import { DELIVERY_HOUR, DELIVERY_WINDOW_END_HOUR, deliveryMomentFor } from "@/entities/newsletter";
 import { getNextScheduledNewsletter, listAllNewsletters } from "@/entities/newsletter/server";
 import { listNotes } from "@/entities/note/server";
 import { FailurePanel } from "@/features/delivery-failures";
+import { ShareSubscribeCard } from "@/features/share-subscribe-link";
+import { organisationUrl } from "@/shared/config";
 import { getDictionary, getLocale } from "@/shared/i18n/server";
-import { formatDateTime } from "@/shared/lib";
+import { formatDate } from "@/shared/lib";
 import { buttonClasses, Notice } from "@/shared/ui";
 import { TeamShell } from "@/widgets/team-shell";
 import { requireTeamAccess } from "@/widgets/team-shell/server";
@@ -13,12 +16,13 @@ import { StatTile } from "./StatTile";
 
 export const TeamOverviewView = async () => {
   const { organisation, role } = await requireTeamAccess();
-  const [failures, members, next, newsletters, notes, t, locale] = await Promise.all([
+  const [failures, members, next, newsletters, notes, requestCount, t, locale] = await Promise.all([
     listUnresolvedFailures(organisation.id),
     listMembers(organisation.id, ["admin", "writer", "subscriber"]),
     getNextScheduledNewsletter(organisation.id),
     listAllNewsletters(organisation.id),
     listNotes(organisation.id),
+    role === "admin" ? countSubscriptionRequests(organisation.id) : Promise.resolve(0),
     getDictionary(),
     getLocale(),
   ]);
@@ -28,6 +32,14 @@ export const TeamOverviewView = async () => {
 
   return (
     <TeamShell role={role} title={t.overview.title} description={t.overview.description(organisation.name)}>
+      {requestCount > 0 && (
+        <Notice tone="warning">
+          {t.requests.pendingNotice(requestCount)}{" "}
+          <Link href="/team/subscribers#requests" className="font-semibold text-brand underline underline-offset-4">
+            {t.requests.review}
+          </Link>
+        </Notice>
+      )}
       <FailurePanel failures={failures} />
       {failures.length === 0 && <Notice tone="success">{t.overview.allDelivered}</Notice>}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -35,8 +47,12 @@ export const TeamOverviewView = async () => {
         <StatTile
           tone="accent"
           label={t.overview.nextIssue}
-          value={next?.scheduledAt ? formatDateTime(next.scheduledAt, locale) : "—"}
-          hint={next?.title ?? t.overview.nothingScheduled}
+          value={next?.scheduledAt ? formatDate(deliveryMomentFor(next.scheduledAt), locale) : "—"}
+          hint={
+            next
+              ? `${t.schedule.between(DELIVERY_HOUR, DELIVERY_WINDOW_END_HOUR)} · ${next.title}`
+              : t.overview.nothingScheduled
+          }
         />
         <StatTile label={t.overview.drafts} value={String(drafts)} />
         <StatTile label={t.overview.openNotes} value={String(openNotes)} />
@@ -49,6 +65,12 @@ export const TeamOverviewView = async () => {
           {t.overview.openNotesLink}
         </Link>
       </div>
+      <ShareSubscribeCard
+        url={organisationUrl(organisation.slug, "/")}
+        slug={organisation.slug}
+        organisationName={organisation.name}
+        mode={organisation.subscriptionMode}
+      />
     </TeamShell>
   );
 };

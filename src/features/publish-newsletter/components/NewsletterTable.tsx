@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { NewsletterStatusBadge, publishedAt } from "@/entities/newsletter";
+import { describeDelivery, NewsletterStatusBadge } from "@/entities/newsletter";
+import type { NewsletterSummary } from "@/entities/newsletter";
+import type { Dictionary, Locale } from "@/shared/i18n";
 import { getDictionary, getLocale } from "@/shared/i18n/server";
 import { formatDateTime } from "@/shared/lib";
 import { EmptyState } from "@/shared/ui";
@@ -7,7 +9,16 @@ import type { NewsletterTableProps } from "../types";
 import { DeliveryProgress } from "./DeliveryProgress";
 import { NewsletterRowActions } from "./NewsletterRowActions";
 
-export const NewsletterTable = async ({ rows }: NewsletterTableProps) => {
+// Scheduled issues show their delivery window; sent ones when they went out.
+const dateLabel = (newsletter: NewsletterSummary, t: Dictionary, locale: Locale): string => {
+  if (newsletter.sentAt) return formatDateTime(newsletter.sentAt, locale);
+  if (newsletter.status === "scheduled" && newsletter.scheduledAt) {
+    return describeDelivery(newsletter.scheduledAt, t, locale);
+  }
+  return "—";
+};
+
+export const NewsletterTable = async ({ rows, earliestDate }: NewsletterTableProps) => {
   const [t, locale] = await Promise.all([getDictionary(), getLocale()]);
   if (rows.length === 0) return <EmptyState title={t.newsletters.emptyTitle}>{t.newsletters.emptyBody}</EmptyState>;
   return (
@@ -24,7 +35,6 @@ export const NewsletterTable = async ({ rows }: NewsletterTableProps) => {
         </thead>
         <tbody className="divide-y divide-line align-top">
           {rows.map(({ newsletter, stats }) => {
-            const date = publishedAt(newsletter);
             return (
               <tr key={newsletter.id}>
                 <td className="py-3 pr-4">
@@ -36,12 +46,12 @@ export const NewsletterTable = async ({ rows }: NewsletterTableProps) => {
                 <td className="py-3 pr-4">
                   <NewsletterStatusBadge status={newsletter.status} />
                 </td>
-                <td className="py-3 pr-4 whitespace-nowrap">{date ? formatDateTime(date, locale) : "—"}</td>
+                <td className="py-3 pr-4">{dateLabel(newsletter, t, locale)}</td>
                 <td className="py-3 pr-4">
                   <DeliveryProgress stats={stats} />
                 </td>
                 <td className="py-3 text-right">
-                  <NewsletterRowActions newsletter={newsletter} />
+                  <NewsletterRowActions newsletter={newsletter} earliestDate={earliestDate} />
                 </td>
               </tr>
             );

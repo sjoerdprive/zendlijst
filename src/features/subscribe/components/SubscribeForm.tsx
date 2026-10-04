@@ -5,8 +5,9 @@ import { useDictionary } from "@/shared/i18n";
 import { IDLE_STATE } from "@/shared/lib";
 import { Field, FormMessage, Input, SubmitButton } from "@/shared/ui";
 import { subscribeAction } from "../actions";
+import type { SubscribeFormProps } from "../types";
 
-export const SubscribeForm = () => {
+export const SubscribeForm = ({ requiresApproval }: SubscribeFormProps) => {
   const t = useDictionary();
   const [state, formAction] = useActionState(subscribeAction, IDLE_STATE);
   const errors = state.status === "error" ? state.fieldErrors : undefined;
@@ -26,7 +27,7 @@ export const SubscribeForm = () => {
       </label>
       <FormMessage state={state} />
       <SubmitButton pendingLabel={t.subscribe.pending} className="w-full">
-        {t.subscribe.submit}
+        {requiresApproval ? t.subscribe.submitRequest : t.subscribe.submit}
       </SubmitButton>
       <p className="text-xs text-muted">{t.subscribe.privacy}</p>
     </form>

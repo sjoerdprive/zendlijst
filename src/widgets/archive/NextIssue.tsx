@@ -1,5 +1,5 @@
+import { deliveryMomentFor, describeDelivery } from "@/entities/newsletter";
 import { getDictionary, getLocale } from "@/shared/i18n/server";
-import { formatDateTime } from "@/shared/lib";
 import type { NextIssueProps } from "./types";
 
 export const NextIssue = async ({ next }: NextIssueProps) => {
@@ -11,7 +11,9 @@ export const NextIssue = async ({ next }: NextIssueProps) => {
       <p className="relative text-xs font-semibold uppercase tracking-widest opacity-80">{t.archive.nextIssue}</p>
       <p className="relative mt-1 font-display text-2xl font-semibold">
         {next?.scheduledAt ? (
-          <time dateTime={next.scheduledAt.toISOString()}>{formatDateTime(next.scheduledAt, locale)}</time>
+          <time dateTime={deliveryMomentFor(next.scheduledAt).toISOString()}>
+            {describeDelivery(next.scheduledAt, t, locale)}
+          </time>
         ) : (
           t.archive.notScheduled
         )}

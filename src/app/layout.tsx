@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import { I18nProvider } from "@/shared/i18n";
 import { getDictionary, getLocale } from "@/shared/i18n/server";
-import { ServiceWorkerRegistrar } from "@/shared/pwa";
+import { InstallPrompt, ServiceWorkerRegistrar } from "@/shared/pwa";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -45,7 +45,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-paper text-ink">
-        <I18nProvider locale={locale}>{children}</I18nProvider>
+        <I18nProvider locale={locale}>
+          {children}
+          <InstallPrompt />
+        </I18nProvider>
         <ServiceWorkerRegistrar />
       </body>
     </html>

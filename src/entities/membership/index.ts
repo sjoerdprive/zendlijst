@@ -6,6 +6,7 @@ export type {
   MemberWithEmail,
   Membership,
   Recipient,
+  SubscriptionRequest,
   TeamRole,
   Viewer,
 } from "./types";

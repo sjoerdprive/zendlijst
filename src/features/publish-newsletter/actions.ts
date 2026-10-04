@@ -6,6 +6,8 @@ import { z } from "zod";
 import { authorizeMember } from "@/entities/membership/server";
 import {
   contentTypeForFileName,
+  deliveryMomentForDate,
+  describeDelivery,
   MAX_NEWSLETTER_BYTES,
 } from "@/entities/newsletter";
 import {
@@ -15,8 +17,9 @@ import {
 } from "@/entities/newsletter/server";
 import { requireCurrentOrganisation } from "@/entities/organisation/server";
 import type { Dictionary } from "@/shared/i18n";
-import { getDictionary } from "@/shared/i18n/server";
+import { getDictionary, getLocale } from "@/shared/i18n/server";
 import { actionError, actionSuccess, fieldErrors, type ActionState } from "@/shared/lib";
+import { isPdf, sanitizeNewsletterHtml } from "./sanitize";
 import { triggerDispatch } from "./triggerDispatch";
 
 const authorizeTeam = async () => {
@@ -25,11 +28,12 @@ const authorizeTeam = async () => {
   return member ? { organisation, member } : null;
 };
 
+// Only a date is chosen; delivery is always at the fixed morning moment (Dutch time).
 const scheduleSchema = (t: Dictionary) =>
   z
-    .union([z.literal(""), z.iso.datetime()])
-    .transform((value) => (value ? new Date(value) : null))
-    .refine((date) => !date || date.getTime() > Date.now() - 60_000, t.newsletters.futureMoment);
+    .union([z.literal(""), z.iso.date()])
+    .transform((value) => (value ? deliveryMomentForDate(value) : null))
+    .refine((date) => !date || date.getTime() > Date.now(), t.newsletters.futureMoment);
 
 const uploadSchema = (t: Dictionary) =>
   z.object({
@@ -50,7 +54,7 @@ export const uploadNewsletterAction = async (
   const parsed = uploadSchema(t).safeParse({
     title: formData.get("title"),
     summary: formData.get("summary") || undefined,
-    scheduledAt: formData.get("scheduledAt") ?? "",
+    scheduledAt: formData.get("scheduledDate") ?? "",
     mode: formData.get("mode"),
   });
   if (!parsed.success) return actionError(t.common.checkForm, fieldErrors(parsed.error));
@@ -70,8 +74,15 @@ export const uploadNewsletterAction = async (
   const { title, summary, mode } = parsed.data;
   const scheduledAt = mode === "now" ? new Date() : mode === "schedule" ? parsed.data.scheduledAt : null;
   if (mode === "schedule" && !scheduledAt) {
-    return actionError(t.newsletters.pickDateTime, { scheduledAt: [t.newsletters.pickDateTime] });
+    return actionError(t.newsletters.pickDateTime, { scheduledDate: [t.newsletters.pickDateTime] });
   }
+
+  const raw = Buffer.from(await file.arrayBuffer());
+  if (contentType === "application/pdf" && !isPdf(raw)) {
+    return actionError(t.newsletters.invalidPdf, { file: [t.newsletters.invalidPdf] });
+  }
+  const content =
+    contentType === "text/html" ? Buffer.from(sanitizeNewsletterHtml(raw.toString("utf8")), "utf8") : raw;
 
   await createNewsletter({
     organisationId: context.organisation.id,
@@ -79,7 +90,7 @@ export const uploadNewsletterAction = async (
     summary: summary ?? null,
     fileName: file.name,
     contentType,
-    content: Buffer.from(await file.arrayBuffer()),
+    content,
     scheduledAt,
     createdById: context.member.userId,
   });
@@ -89,8 +100,8 @@ export const uploadNewsletterAction = async (
     after(triggerDispatch);
     return actionSuccess(t.newsletters.sendingStarted);
   }
-  if (mode === "draft") return actionSuccess(t.newsletters.savedDraft);
-  return actionSuccess(t.newsletters.scheduled);
+  if (mode === "draft" || !scheduledAt) return actionSuccess(t.newsletters.savedDraft);
+  return actionSuccess(t.newsletters.scheduledFor(describeDelivery(scheduledAt, t, await getLocale())));
 };
 
 const rescheduleSchema = (t: Dictionary) =>
@@ -108,7 +119,7 @@ export const rescheduleNewsletterAction = async (
   if (!context) return actionError(t.common.notAllowed);
   const parsed = rescheduleSchema(t).safeParse({
     newsletterId: formData.get("newsletterId"),
-    scheduledAt: formData.get("scheduledAt") ?? "",
+    scheduledAt: formData.get("scheduledDate") ?? "",
   });
   if (!parsed.success) return actionError(t.newsletters.futureMoment);
   const updated = await setNewsletterSchedule(
@@ -118,7 +129,10 @@ export const rescheduleNewsletterAction = async (
   );
   refresh();
   if (!updated) return actionError(t.newsletters.alreadySending);
-  return actionSuccess(parsed.data.scheduledAt ? t.newsletters.scheduleUpdated : t.newsletters.movedToDrafts);
+  if (!parsed.data.scheduledAt) return actionSuccess(t.newsletters.movedToDrafts);
+  return actionSuccess(
+    t.newsletters.rescheduledFor(describeDelivery(parsed.data.scheduledAt, t, await getLocale())),
+  );
 };
 
 export const deleteNewsletterAction = async (

@@ -128,10 +128,15 @@ export const organisationRequest = pgTable("organisation_request", {
   createdAt: createdAt(),
 });
 
+// open: anyone can subscribe · approval: an admin approves each request ·
+// closed: only admins add subscribers.
+export const subscriptionMode = pgEnum("subscription_mode", ["open", "approval", "closed"]);
+
 export const organisation = pgTable("organisation", {
   id: id(),
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
+  subscriptionMode: subscriptionMode("subscription_mode").notNull().default("open"),
   createdAt: createdAt(),
 });
 
@@ -156,6 +161,24 @@ export const membership = pgTable(
     uniqueIndex("membership_org_user_idx").on(table.organisationId, table.userId),
     index("membership_org_role_idx").on(table.organisationId, table.role),
   ],
+);
+
+// Pending subscriptions for organisations in "approval" mode. Kept apart from
+// memberships so a pending person never gains access to the archive.
+export const subscriptionRequest = pgTable(
+  "subscription_request",
+  {
+    id: id(),
+    organisationId: text("organisation_id")
+      .notNull()
+      .references(() => organisation.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    emailNotifications: boolean("email_notifications").notNull().default(true),
+    createdAt: createdAt(),
+  },
+  (table) => [uniqueIndex("subscription_request_org_user_idx").on(table.organisationId, table.userId)],
 );
 
 export const newsletterStatus = pgEnum("newsletter_status", [

@@ -1,16 +1,20 @@
 "use client";
 
 import { useActionState } from "react";
-import { ACCEPTED_NEWSLETTER_EXTENSIONS } from "@/entities/newsletter";
+import {
+  ACCEPTED_NEWSLETTER_EXTENSIONS,
+  DELIVERY_HOUR,
+  DELIVERY_WINDOW_END_HOUR,
+} from "@/entities/newsletter";
 import { useDictionary } from "@/shared/i18n";
 import { IDLE_STATE } from "@/shared/lib";
-import { DateTimeInput, Field, FormMessage, Input, SubmitButton, Textarea } from "@/shared/ui";
+import { Field, FormMessage, Input, SubmitButton, Textarea } from "@/shared/ui";
 import { uploadNewsletterAction } from "../actions";
-import type { PublishMode } from "../types";
+import type { PublishMode, UploadNewsletterFormProps } from "../types";
 
 const MODES: PublishMode[] = ["schedule", "now", "draft"];
 
-export const UploadNewsletterForm = () => {
+export const UploadNewsletterForm = ({ earliestDate }: UploadNewsletterFormProps) => {
   const t = useDictionary();
   const [state, formAction] = useActionState(uploadNewsletterAction, IDLE_STATE);
   const errors = state.status === "error" ? state.fieldErrors : undefined;
@@ -43,8 +47,13 @@ export const UploadNewsletterForm = () => {
         </div>
       </fieldset>
       <div className="hidden group-has-[input[value=schedule]:checked]:block">
-        <Field label={t.newsletters.publishAt} name="scheduledAt" hint={t.newsletters.publishAtHint} errors={errors?.scheduledAt}>
-          <DateTimeInput id="scheduledAt" name="scheduledAt" />
+        <Field
+          label={t.newsletters.publishAt}
+          name="scheduledDate"
+          hint={t.schedule.explanation(DELIVERY_HOUR, DELIVERY_WINDOW_END_HOUR)}
+          errors={errors?.scheduledDate ?? errors?.scheduledAt}
+        >
+          <Input id="scheduledDate" name="scheduledDate" type="date" min={earliestDate} defaultValue={earliestDate} className="sm:w-56" />
         </Field>
       </div>
       <FormMessage state={state} />

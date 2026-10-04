@@ -13,4 +13,12 @@ export {
   listTeamEmails,
   setEmailNotifications,
 } from "./dal";
+export {
+  approveSubscriptionRequest,
+  countSubscriptionRequests,
+  createSubscriptionRequest,
+  hasSubscriptionRequest,
+  listSubscriptionRequests,
+  rejectSubscriptionRequest,
+} from "./requests";
 export { createUnsubscribeToken, parseUnsubscribeToken } from "./tokens";

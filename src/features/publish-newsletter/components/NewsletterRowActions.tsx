@@ -1,21 +1,22 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { isEditable } from "@/entities/newsletter";
+import { deliveryMomentFor, isEditable, toAppDateString } from "@/entities/newsletter";
 import { useDictionary } from "@/shared/i18n";
-import { IDLE_STATE } from "@/shared/lib";
-import { Button, DateTimeInput, SubmitButton } from "@/shared/ui";
+import { cn, IDLE_STATE } from "@/shared/lib";
+import { Button, Input, SubmitButton } from "@/shared/ui";
 import { deleteNewsletterAction, rescheduleNewsletterAction } from "../actions";
 import type { NewsletterRowActionsProps } from "../types";
 
-export const NewsletterRowActions = ({ newsletter }: NewsletterRowActionsProps) => {
+export const NewsletterRowActions = ({ newsletter, earliestDate }: NewsletterRowActionsProps) => {
   const t = useDictionary();
   const [rescheduleState, rescheduleAction] = useActionState(rescheduleNewsletterAction, IDLE_STATE);
   const [deleteState, deleteAction] = useActionState(deleteNewsletterAction, IDLE_STATE);
   const [editing, setEditing] = useState(false);
 
   if (!isEditable(newsletter.status)) return null;
-  const message = [rescheduleState, deleteState].find((state) => state.status === "error");
+  const message = [deleteState, rescheduleState].find((state) => state.status !== "idle");
+  const currentDate = newsletter.scheduledAt ? toAppDateString(deliveryMomentFor(newsletter.scheduledAt)) : "";
 
   return (
     <div className="space-y-2">
@@ -39,18 +40,23 @@ export const NewsletterRowActions = ({ newsletter }: NewsletterRowActionsProps) 
           <label htmlFor={`reschedule-${newsletter.id}`} className="sr-only">
             {t.newsletters.newDate}
           </label>
-          <div className="w-56">
-            <DateTimeInput
+          <div className="w-44">
+            <Input
               id={`reschedule-${newsletter.id}`}
-              name="scheduledAt"
-              defaultValue={newsletter.scheduledAt?.toISOString()}
-              min={new Date().toISOString()}
+              name="scheduledDate"
+              type="date"
+              defaultValue={currentDate}
+              min={earliestDate}
             />
           </div>
           <SubmitButton variant="secondary">{t.common.save}</SubmitButton>
         </form>
       )}
-      {message?.status === "error" && <p className="text-right text-xs text-danger">{message.message}</p>}
+      {message ? (
+        <p className={cn("text-right text-xs", message.status === "error" ? "text-danger" : "text-muted")}>
+          {message.message}
+        </p>
+      ) : null}
     </div>
   );
 };

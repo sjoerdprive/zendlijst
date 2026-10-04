@@ -10,6 +10,7 @@ import type {
   NewOrganisationRequest,
   Organisation,
   OrganisationRequest,
+  SubscriptionMode,
 } from "./types";
 import { slugFromHost } from "./utils";
 
@@ -17,6 +18,7 @@ const toOrganisation = (row: typeof organisation.$inferSelect): Organisation => 
   id: row.id,
   slug: row.slug,
   name: row.name,
+  subscriptionMode: row.subscriptionMode,
 });
 
 export const getOrganisationBySlug = cache(
@@ -148,4 +150,14 @@ export const approveOrganisationRequest = async (
     if (error instanceof TransactionRollbackError) return null;
     throw error;
   }
+};
+
+export const setSubscriptionMode = async (
+  organisationId: string,
+  mode: SubscriptionMode,
+): Promise<void> => {
+  await getDb()
+    .update(organisation)
+    .set({ subscriptionMode: mode })
+    .where(eq(organisation.id, organisationId));
 };

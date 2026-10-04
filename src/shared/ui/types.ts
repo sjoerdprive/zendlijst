@@ -61,11 +61,3 @@ export interface EmptyStateProps {
   title: string;
   children?: ReactNode;
 }
-
-export interface DateTimeInputProps {
-  id: string;
-  name: string;
-  defaultValue?: string;
-  required?: boolean;
-  min?: string;
-}

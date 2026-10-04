@@ -5,6 +5,6 @@ import type { HomeContentProps } from "./types";
 
 export const HomeContent = ({ organisation, viewer }: HomeContentProps) => {
   if (!viewer) return <AnonymousHome organisation={organisation} />;
-  if (!viewer.membership) return <JoinHome organisation={organisation} />;
+  if (!viewer.membership) return <JoinHome organisation={organisation} userId={viewer.userId} />;
   return <MemberHome organisationId={organisation.id} />;
 };
