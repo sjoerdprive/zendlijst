@@ -1,35 +1,22 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState } from "react";
 import { useDictionary } from "@/shared/i18n";
-import { IDLE_STATE } from "@/shared/lib";
-import { Field, FormMessage, Input, SubmitButton } from "@/shared/ui";
-import { subscribeAction } from "../actions";
-import type { SubscribeFormProps } from "../types";
+import type { PendingSubscription, SubscribeFormProps } from "../types";
+import { SubscribeCodeForm } from "./SubscribeCodeForm";
+import { SubscribeEmailForm } from "./SubscribeEmailForm";
 
+// Step 1 sends the confirmation email; step 2 accepts its code, so the
+// subscription can be confirmed without leaving the installed app.
 export const SubscribeForm = ({ requiresApproval }: SubscribeFormProps) => {
   const t = useDictionary();
-  const [state, formAction] = useActionState(subscribeAction, IDLE_STATE);
-  const errors = state.status === "error" ? state.fieldErrors : undefined;
-
-  if (state.status === "success") {
-    return <FormMessage state={state} />;
-  }
-
+  const [pending, setPending] = useState<PendingSubscription | null>(null);
+  if (!pending) return <SubscribeEmailForm requiresApproval={requiresApproval} onSent={setPending} />;
   return (
-    <form action={formAction} className="space-y-4">
-      <Field label={t.common.emailLabel} name="email" errors={errors?.email}>
-        <Input id="email" name="email" type="email" autoComplete="email" required placeholder={t.common.emailPlaceholder} />
-      </Field>
-      <label className="flex items-start gap-2 text-sm">
-        <input type="checkbox" name="notify" defaultChecked className="mt-0.5 size-4 rounded accent-brand" />
-        <span>{t.subscribe.notifyLabel}</span>
-      </label>
-      <FormMessage state={state} />
-      <SubmitButton pendingLabel={t.subscribe.pending} className="w-full">
-        {requiresApproval ? t.subscribe.submitRequest : t.subscribe.submit}
-      </SubmitButton>
-      <p className="text-xs text-muted">{t.subscribe.privacy}</p>
-    </form>
+    <SubscribeCodeForm
+      pending={pending}
+      message={requiresApproval ? t.subscribe.successApproval : t.subscribe.success}
+      onBack={() => setPending(null)}
+    />
   );
 };

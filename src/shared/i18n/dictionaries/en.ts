@@ -85,7 +85,15 @@ export const en: Dictionary = {
     linkError: "That sign-in link is invalid or expired. Request a new one.",
     submit: "Email me a sign-in link",
     pending: "Sending link…",
-    checkInbox: "If that address can sign in here, a sign-in link is on its way. Check your inbox.",
+    checkInbox: "If that address can sign in here, an email with a sign-in link and a code is on its way.",
+    codeLabel: "Code from the email",
+    codeHint: "Enter the 6 digits, or click the link in the email.",
+    codeSubmit: "Sign in with code",
+    codePending: "Checking…",
+    codeInvalid: "That code is not right. Check the digits and try again.",
+    codeExpired: "This code has expired. Request a new email.",
+    codeLocked: "Too many wrong codes. Request a new email.",
+    useOtherEmail: "Use a different email address",
     notSubscribed: "Not subscribed yet?",
     subscribe: "Subscribe",
   },
@@ -130,11 +138,12 @@ export const en: Dictionary = {
     joinPending: "Subscribing…",
     submitRequest: "Request subscription",
     successApproval:
-      "Almost there! Confirm your email address with the link in your inbox. An admin will then review your request.",
+      "Almost there! Confirm your email address with the link or the code from the email. An admin will then review your request.",
     closed: "Subscribing is not possible at the moment.",
     privacy:
       "We will email you a link to confirm your address. Your email is stored encrypted and only used for this newsletter.",
-    success: "Almost there! We sent you an email. Click the link inside to confirm your subscription.",
+    success: "Almost there! We sent you an email with a link and a code. Confirm your subscription with either one.",
+    codeSubmit: "Confirm with code",
   },
   schedule: {
     window: (day, from, to) => `${day}, between ${from}:00 and ${to}:00`,
@@ -391,6 +400,8 @@ export const en: Dictionary = {
       bodyHtml: (contextHtml) =>
         `Use the button below to confirm your email address and sign in to <strong>${contextHtml}</strong>. The link expires in 15 minutes and works once.`,
       ignore: "If you did not request this, you can ignore this email.",
+      codeIntro: "Using the app on your home screen? Enter this code instead:",
+      codeText: (code) => `Or enter this code in the app: ${code}`,
       button: "Sign in",
     },
     failureAlert: {

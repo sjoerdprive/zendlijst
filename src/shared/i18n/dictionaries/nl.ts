@@ -89,7 +89,15 @@ export const nl = {
     linkError: "Die inloglink is ongeldig of verlopen. Vraag een nieuwe aan.",
     submit: "Stuur me een inloglink",
     pending: "Link versturen…",
-    checkInbox: "Als dit adres hier kan inloggen, is er een inloglink onderweg. Kijk in je inbox.",
+    checkInbox: "Als dit adres hier kan inloggen, is er een e-mail onderweg met een inloglink en een code.",
+    codeLabel: "Code uit de e-mail",
+    codeHint: "Vul de 6 cijfers in, of klik op de link in de e-mail.",
+    codeSubmit: "Inloggen met code",
+    codePending: "Controleren…",
+    codeInvalid: "Deze code klopt niet. Controleer de cijfers en probeer het opnieuw.",
+    codeExpired: "Deze code is verlopen. Vraag een nieuwe e-mail aan.",
+    codeLocked: "Te vaak een verkeerde code ingevuld. Vraag een nieuwe e-mail aan.",
+    useOtherEmail: "Ander e-mailadres gebruiken",
     notSubscribed: "Nog geen abonnee?",
     subscribe: "Aanmelden",
   },
@@ -135,11 +143,12 @@ export const nl = {
     joinPending: "Aanmelden…",
     submitRequest: "Abonnement aanvragen",
     successApproval:
-      "Bijna klaar! Bevestig je e-mailadres via de link in je inbox. Daarna beoordeelt een beheerder je aanvraag.",
+      "Bijna klaar! Bevestig je e-mailadres met de link of de code uit de e-mail. Daarna beoordeelt een beheerder je aanvraag.",
     closed: "Aanmelden is op dit moment niet mogelijk.",
     privacy:
       "We mailen je een link om je adres te bevestigen. Je e-mailadres wordt versleuteld opgeslagen en alleen voor deze nieuwsbrief gebruikt.",
-    success: "Bijna klaar! We hebben je een e-mail gestuurd. Klik op de link om je aanmelding te bevestigen.",
+    success: "Bijna klaar! We hebben je een e-mail gestuurd met een link en een code. Bevestig je aanmelding met een van beide.",
+    codeSubmit: "Bevestigen met code",
   },
   schedule: {
     window: (day: string, from: number, to: number) => `${day}, tussen ${from}:00 en ${to}:00`,
@@ -404,6 +413,8 @@ export const nl = {
       bodyHtml: (contextHtml: string) =>
         `Gebruik de knop hieronder om je e-mailadres te bevestigen en in te loggen bij <strong>${contextHtml}</strong>. De link verloopt over 15 minuten en werkt één keer.`,
       ignore: "Heb je dit niet aangevraagd? Dan kun je deze e-mail negeren.",
+      codeIntro: "Gebruik je de app op je beginscherm? Vul dan deze code in:",
+      codeText: (code: string) => `Of vul deze code in de app in: ${code}`,
       button: "Inloggen",
     },
     failureAlert: {

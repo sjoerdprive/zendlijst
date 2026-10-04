@@ -15,7 +15,9 @@ export const NewsletterRowActions = ({ newsletter, earliestDate }: NewsletterRow
   const [editing, setEditing] = useState(false);
 
   if (!isEditable(newsletter.status)) return null;
-  const message = [deleteState, rescheduleState].find((state) => state.status !== "idle");
+  const message = [deleteState, rescheduleState].find(
+    (state) => state.status === "success" || state.status === "error",
+  );
   const currentDate = newsletter.scheduledAt ? toAppDateString(deliveryMomentFor(newsletter.scheduledAt)) : "";
 
   return (

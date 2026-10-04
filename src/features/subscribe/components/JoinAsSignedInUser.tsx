@@ -1,12 +1,15 @@
-import { getDictionary } from "@/shared/i18n/server";
+"use client";
+
+import { useDictionary } from "@/shared/i18n";
+import { navigateTo } from "@/shared/lib";
 import { SubmitButton } from "@/shared/ui";
 import { subscribeSignedInAction } from "../actions";
 import type { JoinAsSignedInUserProps } from "../types";
 
-export const JoinAsSignedInUser = async ({ requiresApproval }: JoinAsSignedInUserProps) => {
-  const t = await getDictionary();
+export const JoinAsSignedInUser = ({ requiresApproval }: JoinAsSignedInUserProps) => {
+  const t = useDictionary();
   return (
-    <form action={subscribeSignedInAction} className="space-y-4">
+    <form action={async (formData) => navigateTo(await subscribeSignedInAction(formData))} className="space-y-4">
       <label className="flex items-start gap-2 text-sm">
         <input type="checkbox" name="notify" defaultChecked className="mt-0.5 size-4 rounded accent-brand" />
         <span>{t.subscribe.notifyLabel}</span>

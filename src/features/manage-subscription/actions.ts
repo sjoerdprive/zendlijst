@@ -1,7 +1,6 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { redirect } from "next/navigation";
 import {
   authorizeMember,
   deleteMembership,
@@ -26,13 +25,14 @@ export const updateNotificationsAction = async (
   return actionSuccess(enabled ? t.settings.notificationsOn : t.settings.notificationsOff);
 };
 
-export const unsubscribeAction = async (): Promise<void> => {
+// Returns where to go; the button does a full page load (see useFullPageRedirect).
+export const unsubscribeAction = async (): Promise<string> => {
   const organisation = await requireCurrentOrganisation();
   const member = await authorizeMember(organisation.id, ["writer", "subscriber"]);
   if (member) {
     await deleteMembership(organisation.id, member.id, ["writer", "subscriber"]);
   }
-  redirect("/?unsubscribed=1");
+  return "/?unsubscribed=1";
 };
 
 export const unsubscribeWithTokenAction = async (

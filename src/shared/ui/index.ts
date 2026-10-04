@@ -4,7 +4,7 @@ export { Card } from "./Card";
 export { EmptyState } from "./EmptyState";
 export { Field } from "./Field";
 export { FormMessage } from "./FormMessage";
-export { Input, Select, Textarea } from "./inputs";
+export { CodeInput, Input, Select, Textarea } from "./inputs";
 export { Notice } from "./Notice";
 export { PageContainer } from "./PageContainer";
 export { SubmitButton } from "./SubmitButton";

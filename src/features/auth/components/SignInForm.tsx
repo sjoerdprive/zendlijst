@@ -1,23 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
-import { useDictionary } from "@/shared/i18n";
-import { IDLE_STATE } from "@/shared/lib";
-import { Field, FormMessage, Input, SubmitButton } from "@/shared/ui";
-import { signInAction } from "../actions";
+import { useState } from "react";
+import { SignInCodeForm } from "./SignInCodeForm";
+import { SignInEmailForm } from "./SignInEmailForm";
 
+// Step 1 asks for the email address; step 2 accepts the code from the email
+// (the link in the same email keeps working too).
 export const SignInForm = () => {
-  const t = useDictionary();
-  const [state, formAction] = useActionState(signInAction, IDLE_STATE);
-  return (
-    <form action={formAction} className="space-y-4">
-      <Field label={t.common.emailLabel} name="email">
-        <Input id="email" name="email" type="email" autoComplete="email" required placeholder={t.common.emailPlaceholder} />
-      </Field>
-      <FormMessage state={state} />
-      <SubmitButton pendingLabel={t.signIn.pending} className="w-full">
-        {t.signIn.submit}
-      </SubmitButton>
-    </form>
-  );
+  const [email, setEmail] = useState<string | null>(null);
+  return email ? <SignInCodeForm email={email} onBack={() => setEmail(null)} /> : <SignInEmailForm onSent={setEmail} />;
 };

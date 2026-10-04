@@ -3,3 +3,7 @@ export interface SessionUser {
   email: string;
   name: string;
 }
+
+export type CodeSignInResult =
+  | { status: "ok"; userId: string }
+  | { status: "invalid" | "expired" | "locked" };

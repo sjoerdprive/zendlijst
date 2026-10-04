@@ -61,6 +61,10 @@ export const decryptEmail = decryptText;
 export const emailBlindIndex = (email: string): string =>
   createHmac("sha256", hashKey()).update(normalizeEmail(email)).digest("hex");
 
+// Keyed hash for lookup keys that embed an email address (e.g. sign-in codes).
+export const hashIdentifier = (value: string): string =>
+  createHmac("sha256", hashKey()).update(`identifier:${value}`).digest("hex");
+
 export const isBlindIndex = (value: string): boolean =>
   /^[0-9a-f]{64}$/.test(value);
 

@@ -5,6 +5,7 @@ export {
   findOrCreateUserByEmail,
   getSessionUser,
   sendSignInLink,
+  signInWithCode,
   signOutCurrentUser,
 } from "./session";
-export type { SessionUser } from "./types";
+export type { CodeSignInResult, SessionUser } from "./types";

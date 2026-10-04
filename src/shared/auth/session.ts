@@ -1,10 +1,11 @@
 import "server-only";
+import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { cache } from "react";
 import { normalizeEmail } from "@/shared/crypto";
 import { getLocale } from "@/shared/i18n/server";
 import { getAuth } from "./auth";
-import type { SessionUser } from "./types";
+import type { CodeSignInResult, SessionUser } from "./types";
 
 // Deduplicated per request; safe to call from any server component or action.
 export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
@@ -52,4 +53,23 @@ export const sendSignInLink = async (input: {
 
 export const signOutCurrentUser = async (): Promise<void> => {
   await getAuth().api.signOut({ headers: await headers() });
+};
+
+// Signs in with the 6-digit code from the sign-in email. Sets the session
+// cookie on the current response (via nextCookies), so it works inside the
+// installed app where the email link would open the browser instead.
+export const signInWithCode = async (email: string, code: string): Promise<CodeSignInResult> => {
+  try {
+    const result = await getAuth().api.signInEmailOTP({
+      headers: await headers(),
+      body: { email: normalizeEmail(email), otp: code },
+    });
+    return { status: "ok", userId: result.user.id };
+  } catch (error) {
+    if (!(error instanceof APIError)) throw error;
+    const errorCode = String(error.body?.code ?? "");
+    if (errorCode === "OTP_EXPIRED") return { status: "expired" };
+    if (errorCode === "TOO_MANY_ATTEMPTS") return { status: "locked" };
+    return { status: "invalid" };
+  }
 };

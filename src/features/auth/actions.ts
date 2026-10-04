@@ -1,12 +1,18 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { getCurrentOrganisation } from "@/entities/organisation/server";
-import { sendSignInLink, signOutCurrentUser } from "@/shared/auth";
+import { sendSignInLink, signInWithCode, signOutCurrentUser } from "@/shared/auth";
 import { getEnv } from "@/shared/config";
 import { emailBlindIndex } from "@/shared/crypto";
 import { getDictionary } from "@/shared/i18n/server";
-import { actionError, actionSuccess, emailSchema, type ActionState } from "@/shared/lib";
+import {
+  actionError,
+  actionRedirect,
+  actionSuccess,
+  emailSchema,
+  parseOneTimeCode,
+  type ActionState,
+} from "@/shared/lib";
 import { allowRequest } from "@/shared/lib/server";
 
 export const signInAction = async (
@@ -36,7 +42,35 @@ export const signInAction = async (
   return actionSuccess(t.signIn.checkInbox);
 };
 
-export const signOutAction = async (): Promise<void> => {
+// Second step of sign-in: the 6-digit code from the email. Signs in on the
+// current device, which is what makes sign-in work inside the installed app.
+export const verifySignInCodeAction = async (
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> => {
+  const t = await getDictionary();
+  const parsed = emailSchema(t.common.invalidEmail).safeParse(formData.get("email"));
+  const code = parseOneTimeCode(formData.get("code"));
+  if (!parsed.success) return actionError(t.common.invalidEmail);
+  if (!code) return actionError(t.signIn.codeInvalid);
+  const email = parsed.data;
+
+  if (!(await allowRequest("sign-in-code", emailBlindIndex(email), { max: 10 }))) {
+    return actionError(t.common.tooManyAttempts);
+  }
+
+  const result = await signInWithCode(email, code);
+  if (result.status === "expired") return actionError(t.signIn.codeExpired);
+  if (result.status === "locked") return actionError(t.signIn.codeLocked);
+  if (result.status !== "ok") return actionError(t.signIn.codeInvalid);
+
+  // Same destinations as the email link (see signInAction).
+  const organisation = await getCurrentOrganisation();
+  return actionRedirect(!organisation && getEnv().PLATFORM_ADMIN_EMAILS.includes(email) ? "/platform-admin" : "/");
+};
+
+// Returns where to go; the button does a full page load (see useFullPageRedirect).
+export const signOutAction = async (): Promise<string> => {
   await signOutCurrentUser();
-  redirect("/");
+  return "/";
 };

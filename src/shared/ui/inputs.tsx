@@ -15,3 +15,16 @@ export const Textarea = ({ className, ...props }: TextareaProps) => (
 export const Select = ({ className, ...props }: SelectProps) => (
   <select className={cn(CONTROL_CLASSES, className)} {...props} />
 );
+
+// Six-digit one-time code; accepts pasted "123 456" (spaces are stripped server-side).
+export const CodeInput = ({ className, ...props }: InputProps) => (
+  <input
+    type="text"
+    inputMode="numeric"
+    autoComplete="one-time-code"
+    pattern="[0-9 ]{6,7}"
+    maxLength={7}
+    className={cn(CONTROL_CLASSES, "text-center font-mono text-2xl tracking-[0.4em]", className)}
+    {...props}
+  />
+);

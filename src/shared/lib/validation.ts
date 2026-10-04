@@ -6,3 +6,9 @@ export const emailSchema = (message: string) => z.email({ message }).trim().toLo
 // Flattens zod issues into { field: [messages] } for form display.
 export const fieldErrors = (error: z.ZodError): Record<string, string[]> =>
   z.flattenError(error).fieldErrors as Record<string, string[]>;
+
+// Normalises a typed or pasted one-time code; null unless exactly six digits.
+export const parseOneTimeCode = (value: FormDataEntryValue | null): string | null => {
+  const digits = String(value ?? "").replace(/\s+/g, "");
+  return /^\d{6}$/.test(digits) ? digits : null;
+};

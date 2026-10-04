@@ -4,6 +4,7 @@ export {
   emailBlindIndex,
   encryptEmail,
   encryptText,
+  hashIdentifier,
   isBlindIndex,
   normalizeEmail,
   signToken,
