@@ -109,7 +109,7 @@ Emails themselves are not tracked: no pixels, no redirected links.
 `/privacy` (on the root domain and every organisation subdomain, linked in the footer, the subscribe form and
 every newsletter email) describes the data processed, the security measures, the hosting locations and where
 our influence ends. Copy lives in the `legal` section of the dictionaries; keep it in sync with the code.
-The operator name/KvK number is still a placeholder.
+Operator: WebModu.
 
 ## Security
 

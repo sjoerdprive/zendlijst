@@ -425,7 +425,7 @@ export const en: Dictionary = {
         id: "wie",
         title: "Who we are",
         body: [
-          "Zendlijst is a platform that lets organisations send newsletters and keep an archive for their subscribers. Zendlijst is operated by [operator name, Chamber of Commerce number].",
+          "Zendlijst is a platform that lets organisations send newsletters and keep an archive for their subscribers. Zendlijst is operated by WebModu.",
           "Questions about privacy or this page? Email privacy@zendlijst.nl.",
         ],
         items: [],

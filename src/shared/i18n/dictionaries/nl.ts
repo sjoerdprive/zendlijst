@@ -438,7 +438,7 @@ export const nl = {
         id: "wie",
         title: "Wie we zijn",
         body: [
-          "Zendlijst is een platform waarmee organisaties nieuwsbrieven versturen en een archief bijhouden voor hun abonnees. Zendlijst wordt geëxploiteerd door [naam exploitant, KvK-nummer].",
+          "Zendlijst is een platform waarmee organisaties nieuwsbrieven versturen en een archief bijhouden voor hun abonnees. Zendlijst wordt geëxploiteerd door WebModu.",
           "Vragen over privacy of dit document? Mail naar privacy@zendlijst.nl.",
         ],
         items: [],
