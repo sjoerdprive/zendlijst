@@ -152,7 +152,7 @@ Mailpit configured to reject `@bounce.test` so failures were genuine SMTP 550s.
   strike, lists, quotes, dividers, links, images by URL). The JSON in `body` is the source; on every save
   the server validates it against the same whitelist (`editorDocument.ts`), renders email HTML with inline
   styles itself (`render.ts`, no `@tiptap/html`/happy-dom on the server) and runs the result through the
-  same DOMPurify pass as uploads. Only `http(s)`/`mailto` links and `http(s)` images survive, also on paste.
+  same sanitiser as uploads (sanitize-html; see D14). Only `http(s)`/`mailto` links and `http(s)` images survive, also on paste.
   `content` holds the rendered HTML, so dispatch, the archive and the file route did not change. The
   plain-text email part is rendered from the same JSON.
 - **Autosave with an optimistic lock.** `version` is bumped on every save and a save only applies to the
@@ -165,6 +165,14 @@ Mailpit configured to reject `@bounce.test` so failures were genuine SMTP 550s.
   without anyone watching, so the decision is asked on the overview pages afterwards.
 - "Send now" redirects to the overview: the dispatcher marks the issue as sending a moment later, so
   returning to the edit page would still show it as scheduled.
+
+## D14 — sanitize-html instead of DOMPurify on the server
+Moving the sanitiser into the newsletter entity made every tenant page load it, and in Vercel's
+function runtime `jsdom` (needed by `isomorphic-dompurify`) failed to load: it is kept out of the bundle
+by Next.js and `require()`s an ESM-only dependency (`@exodus/bytes`). All subdomains returned 500, while
+local `next start` worked. Uploaded HTML is now cleaned with `sanitize-html` (htmlparser2, no DOM, bundled
+normally) against an explicit allowlist; CSS script vectors (`javascript:` in `url()`, `expression()`)
+are stripped from style attributes and `<style>` blocks as well.
 
 ## Open items / next steps
 - Automated tests (explicitly out of scope for this MVP). The e2e scenario above is a good first Playwright test.

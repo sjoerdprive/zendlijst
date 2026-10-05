@@ -128,7 +128,7 @@ Operator: WebModu.
 
 - Strict nonce-based Content Security Policy on every page (set in `src/proxy.ts`), plus
   `Permissions-Policy`, `X-Frame-Options`, `nosniff` and `Cross-Origin-Opener-Policy` headers.
-- Uploaded HTML is sanitised with DOMPurify (scripts, event handlers, `javascript:` URLs, frames and forms
+- Uploaded HTML is sanitised with sanitize-html against an allowlist (scripts, event handlers, `javascript:` URLs, frames and forms
   removed) and served in a script-less sandbox; PDFs must start with a real PDF signature.
 - All database access goes through Drizzle with bound parameters; React escapes all rendered text and
   emails escape every interpolated value.

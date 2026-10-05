@@ -8,7 +8,7 @@ import type { EditorDocument, EditorMark, EditorNode } from "./types";
  * Renders the editor's JSON as email-safe HTML: every element carries inline
  * styles (email clients ignore stylesheets), all text is escaped, and only
  * http(s)/mailto links and http(s) images survive. The result still goes
- * through the same DOMPurify pass as uploaded HTML.
+ * through the same sanitiser as uploaded HTML.
  */
 
 const FONT = "Arial,Helvetica,sans-serif";
