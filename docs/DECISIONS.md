@@ -143,6 +143,29 @@ Mailpit configured to reject `@bounce.test` so failures were genuine SMTP 550s.
    message. The form now stays mounted and becomes disabled.
 5. A full database dump after the test run contains **zero** plaintext email addresses.
 
+## D13 — Drafts, the rich-text editor and notes per issue
+- **One table, two kinds of rows.** A draft stays a `newsletter` row with status `draft`; file,
+  content type and content became nullable so an empty draft is valid. Scheduling is a status change
+  that requires a title and content (`setNewsletterSchedule` checks both in its `WHERE`). Keeping one
+  table means notes, deliveries, metrics and the archive keep one id for the whole lifecycle.
+- **Editor: Tiptap**, configured with only what email can carry (headings 2–3, bold/italic/underline/
+  strike, lists, quotes, dividers, links, images by URL). The JSON in `body` is the source; on every save
+  the server validates it against the same whitelist (`editorDocument.ts`), renders email HTML with inline
+  styles itself (`render.ts`, no `@tiptap/html`/happy-dom on the server) and runs the result through the
+  same DOMPurify pass as uploads. Only `http(s)`/`mailto` links and `http(s)` images survive, also on paste.
+  `content` holds the rendered HTML, so dispatch, the archive and the file route did not change. The
+  plain-text email part is rendered from the same JSON.
+- **Autosave with an optimistic lock.** `version` is bumped on every save and a save only applies to the
+  version the editor last saw. A stale tab gets a conflict message and turns read-only instead of
+  overwriting someone else's work. Scheduled issues stay editable until sending starts, but cannot be
+  emptied.
+- **Notes follow the next issue.** By default a note goes to the earliest scheduled issue, or waits
+  (`for_next_draft`) for the next draft that is created. After an issue is sent the team decides per issue
+  (or per note) to archive (`archived_at`), delete, or take the open notes along. Sending happens at 08:00
+  without anyone watching, so the decision is asked on the overview pages afterwards.
+- "Send now" redirects to the overview: the dispatcher marks the issue as sending a moment later, so
+  returning to the edit page would still show it as scheduled.
+
 ## Open items / next steps
 - Automated tests (explicitly out of scope for this MVP). The e2e scenario above is a good first Playwright test.
 - Provider bounce/complaint webhooks → mark deliveries failed.
@@ -150,4 +173,5 @@ Mailpit configured to reject `@bounce.test` so failures were genuine SMTP 550s.
 - Key rotation tooling (`v2:` ciphertexts + re-encrypt job); KMS-backed keys.
 - Throughput: sending is sequential per run (~45 s budget). Fine for thousands of
   subscribers per minute with a decent SMTP provider; use the provider's batch API beyond that.
-- Rich-text editor; organisation branding (logo/colours); GDPR export/delete for subscribers.
+- Organisation branding (logo/colours) for the editor template; image upload in the editor; a test
+  email to yourself before sending; GDPR export/delete for subscribers.

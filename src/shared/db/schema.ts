@@ -3,6 +3,7 @@ import {
   customType,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -188,6 +189,10 @@ export const newsletterStatus = pgEnum("newsletter_status", [
   "sent",
 ]);
 
+// editor: written in the team's rich-text editor (`body` is the source, `content`
+// the rendered email HTML) · upload: an uploaded HTML or PDF file.
+export const newsletterSource = pgEnum("newsletter_source", ["editor", "upload"]);
+
 export const newsletter = pgTable(
   "newsletter",
   {
@@ -195,14 +200,19 @@ export const newsletter = pgTable(
     organisationId: text("organisation_id")
       .notNull()
       .references(() => organisation.id, { onDelete: "cascade" }),
-    title: text("title").notNull(),
+    // Drafts may be empty: title, file and content are only required to schedule.
+    title: text("title").notNull().default(""),
     summary: text("summary"),
     status: newsletterStatus("status").notNull().default("draft"),
     scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
     sentAt: timestamp("sent_at", { withTimezone: true }),
-    fileName: text("file_name").notNull(),
-    contentType: text("content_type").notNull(),
-    content: bytea("content").notNull(),
+    source: newsletterSource("source"),
+    body: jsonb("body"),
+    fileName: text("file_name"),
+    contentType: text("content_type"),
+    content: bytea("content"),
+    // Bumped on every save; autosave refuses to overwrite a newer version.
+    version: integer("version").notNull().default(0),
     createdById: text("created_by_id").references(() => user.id, {
       onDelete: "set null",
     }),
@@ -292,7 +302,13 @@ export const note = pgTable(
     }),
     body: text("body").notNull(),
     done: boolean("done").notNull().default(false),
+    // Waits for the next draft that gets created (nothing was scheduled).
+    forNextDraft: boolean("for_next_draft").notNull().default(false),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
     createdAt: createdAt(),
   },
-  (table) => [index("note_org_idx").on(table.organisationId)],
+  (table) => [
+    index("note_org_idx").on(table.organisationId),
+    index("note_newsletter_idx").on(table.newsletterId),
+  ],
 );

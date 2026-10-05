@@ -1,11 +1,16 @@
 import "server-only";
-import { and, asc, desc, eq, gt, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNotNull, ne, sql } from "drizzle-orm";
 import { getDb, newsletter, newsletterRead } from "@/shared/db";
 import type {
+  DraftChanges,
+  EditorDocument,
   NewNewsletter,
   NewsletterContentType,
+  NewsletterDraft,
   NewsletterFile,
   NewsletterSummary,
+  SaveDraftResult,
+  UploadedFile,
 } from "./types";
 
 // Never select `content` for lists; files can be several megabytes.
@@ -16,16 +21,23 @@ const summaryColumns = {
   status: newsletter.status,
   scheduledAt: newsletter.scheduledAt,
   sentAt: newsletter.sentAt,
+  source: newsletter.source,
   fileName: newsletter.fileName,
   contentType: newsletter.contentType,
+  updatedAt: newsletter.updatedAt,
 };
 
-type SummaryRow = Omit<NewsletterSummary, "contentType"> & { contentType: string };
+type SummaryRow = Omit<NewsletterSummary, "contentType"> & { contentType: string | null };
 
 const toSummary = (row: SummaryRow): NewsletterSummary => ({
   ...row,
-  contentType: row.contentType as NewsletterContentType,
+  contentType: row.contentType as NewsletterContentType | null,
 });
+
+const EDITABLE_STATUSES = ["draft", "scheduled"] as const;
+
+const scoped = (organisationId: string, newsletterId: string) =>
+  and(eq(newsletter.organisationId, organisationId), eq(newsletter.id, newsletterId));
 
 export const listPublishedNewsletters = async (
   organisationId: string,
@@ -79,6 +91,10 @@ export const getNewsletter = async (
   return row ? toSummary(row) : null;
 };
 
+// Editor newsletters have no file name; derive one for downloads and attachments.
+const fileNameFor = (title: string, contentType: NewsletterContentType): string =>
+  `${title.trim() || "nieuwsbrief"}${contentType === "application/pdf" ? ".pdf" : ".html"}`;
+
 export const getNewsletterFile = async (
   organisationId: string,
   newsletterId: string,
@@ -93,9 +109,33 @@ export const getNewsletterFile = async (
       content: newsletter.content,
     })
     .from(newsletter)
-    .where(and(eq(newsletter.organisationId, organisationId), eq(newsletter.id, newsletterId)))
+    .where(scoped(organisationId, newsletterId))
     .limit(1);
-  return row ? { ...row, contentType: row.contentType as NewsletterContentType } : null;
+  if (!row?.content || !row.contentType) return null;
+  const contentType = row.contentType as NewsletterContentType;
+  return {
+    ...row,
+    content: row.content,
+    contentType,
+    fileName: row.fileName ?? fileNameFor(row.title, contentType),
+  };
+};
+
+export const getNewsletterDraft = async (
+  organisationId: string,
+  newsletterId: string,
+): Promise<NewsletterDraft | null> => {
+  const [row] = await getDb()
+    .select({
+      ...summaryColumns,
+      body: newsletter.body,
+      version: newsletter.version,
+      hasContent: sql<boolean>`${newsletter.content} is not null`,
+    })
+    .from(newsletter)
+    .where(scoped(organisationId, newsletterId))
+    .limit(1);
+  return row ? { ...toSummary(row), body: row.body as EditorDocument | null, version: row.version, hasContent: row.hasContent } : null;
 };
 
 export const createNewsletter = async (input: NewNewsletter): Promise<string> => {
@@ -103,6 +143,7 @@ export const createNewsletter = async (input: NewNewsletter): Promise<string> =>
     .insert(newsletter)
     .values({
       ...input,
+      source: "upload",
       status: input.scheduledAt ? "scheduled" : "draft",
     })
     .returning({ id: newsletter.id });
@@ -110,24 +151,139 @@ export const createNewsletter = async (input: NewNewsletter): Promise<string> =>
   return created.id;
 };
 
+// An empty draft: nothing is required until it is scheduled.
+export const createEmptyDraft = async (organisationId: string, createdById: string): Promise<string> => {
+  const [created] = await getDb()
+    .insert(newsletter)
+    .values({ organisationId, createdById, status: "draft" })
+    .returning({ id: newsletter.id });
+  if (!created) throw new Error("Failed to create draft");
+  return created.id;
+};
+
+// Tells a stale version apart from a newsletter that is no longer editable.
+const failedSaveReason = async (organisationId: string, newsletterId: string): Promise<SaveDraftResult> => {
+  const [row] = await getDb()
+    .select({ status: newsletter.status })
+    .from(newsletter)
+    .where(scoped(organisationId, newsletterId))
+    .limit(1);
+  return row && (EDITABLE_STATUSES as readonly string[]).includes(row.status)
+    ? { status: "conflict" }
+    : { status: "locked" };
+};
+
+// Saves editor content, but only over the version the editor started from.
+export const saveNewsletterDraft = async (
+  organisationId: string,
+  newsletterId: string,
+  expectedVersion: number,
+  changes: DraftChanges,
+): Promise<SaveDraftResult> => {
+  const [saved] = await getDb()
+    .update(newsletter)
+    .set({
+      title: changes.title,
+      summary: changes.summary,
+      body: changes.body,
+      content: changes.content,
+      contentType: changes.content ? "text/html" : null,
+      fileName: null,
+      source: "editor",
+      version: sql`${newsletter.version} + 1`,
+    })
+    .where(
+      and(
+        scoped(organisationId, newsletterId),
+        inArray(newsletter.status, [...EDITABLE_STATUSES]),
+        eq(newsletter.version, expectedVersion),
+        // An uploaded file is only replaced after it was removed explicitly.
+        sql`${newsletter.source} is distinct from 'upload'`,
+      ),
+    )
+    .returning({ version: newsletter.version });
+  return saved ? { status: "saved", version: saved.version } : failedSaveReason(organisationId, newsletterId);
+};
+
+// Title and summary only, for drafts that carry an uploaded file.
+export const saveNewsletterDetails = async (
+  organisationId: string,
+  newsletterId: string,
+  expectedVersion: number,
+  details: { title: string; summary: string | null },
+): Promise<SaveDraftResult> => {
+  const [saved] = await getDb()
+    .update(newsletter)
+    .set({ ...details, version: sql`${newsletter.version} + 1` })
+    .where(
+      and(
+        scoped(organisationId, newsletterId),
+        inArray(newsletter.status, [...EDITABLE_STATUSES]),
+        eq(newsletter.version, expectedVersion),
+      ),
+    )
+    .returning({ version: newsletter.version });
+  return saved ? { status: "saved", version: saved.version } : failedSaveReason(organisationId, newsletterId);
+};
+
+export const attachNewsletterFile = async (
+  organisationId: string,
+  newsletterId: string,
+  file: UploadedFile,
+): Promise<boolean> => {
+  const updated = await getDb()
+    .update(newsletter)
+    .set({ ...file, source: "upload", body: null, version: sql`${newsletter.version} + 1` })
+    .where(and(scoped(organisationId, newsletterId), inArray(newsletter.status, [...EDITABLE_STATUSES])))
+    .returning({ id: newsletter.id });
+  return updated.length > 0;
+};
+
+// Back to an empty draft (e.g. to write it in the editor instead). Only for
+// drafts: a scheduled newsletter must keep its content.
+export const clearNewsletterContent = async (organisationId: string, newsletterId: string): Promise<boolean> => {
+  const updated = await getDb()
+    .update(newsletter)
+    .set({
+      source: null,
+      body: null,
+      content: null,
+      contentType: null,
+      fileName: null,
+      version: sql`${newsletter.version} + 1`,
+    })
+    .where(and(scoped(organisationId, newsletterId), eq(newsletter.status, "draft")))
+    .returning({ id: newsletter.id });
+  return updated.length > 0;
+};
+
+export type ScheduleResult = "ok" | "locked" | "incomplete";
+
 // Only drafts and scheduled newsletters can be (re)scheduled or unscheduled.
+// Scheduling also needs a title and content.
 export const setNewsletterSchedule = async (
   organisationId: string,
   newsletterId: string,
   scheduledAt: Date | null,
-): Promise<boolean> => {
+): Promise<ScheduleResult> => {
   const updated = await getDb()
     .update(newsletter)
     .set({ scheduledAt, status: scheduledAt ? "scheduled" : "draft" })
     .where(
       and(
-        eq(newsletter.organisationId, organisationId),
-        eq(newsletter.id, newsletterId),
-        inArray(newsletter.status, ["draft", "scheduled"]),
+        scoped(organisationId, newsletterId),
+        inArray(newsletter.status, [...EDITABLE_STATUSES]),
+        ...(scheduledAt ? [isNotNull(newsletter.content), ne(newsletter.title, "")] : []),
       ),
     )
     .returning({ id: newsletter.id });
-  return updated.length > 0;
+  if (updated.length > 0) return "ok";
+  const [row] = await getDb()
+    .select({ status: newsletter.status })
+    .from(newsletter)
+    .where(scoped(organisationId, newsletterId))
+    .limit(1);
+  return row && (EDITABLE_STATUSES as readonly string[]).includes(row.status) ? "incomplete" : "locked";
 };
 
 export const deleteNewsletter = async (
@@ -136,22 +292,20 @@ export const deleteNewsletter = async (
 ): Promise<boolean> => {
   const deleted = await getDb()
     .delete(newsletter)
-    .where(
-      and(
-        eq(newsletter.organisationId, organisationId),
-        eq(newsletter.id, newsletterId),
-        inArray(newsletter.status, ["draft", "scheduled"]),
-      ),
-    )
+    .where(and(scoped(organisationId, newsletterId), inArray(newsletter.status, [...EDITABLE_STATUSES])))
     .returning({ id: newsletter.id });
   return deleted.length > 0;
 };
 
+export interface DeliveryNewsletter extends NewsletterFile {
+  organisationId: string;
+  summary: string | null;
+  body: EditorDocument | null;
+}
+
 // For background jobs only: not scoped to a viewer's organisation, so never
 // call it with user-supplied ids.
-export const getNewsletterForDelivery = async (
-  newsletterId: string,
-): Promise<(NewsletterFile & { organisationId: string; summary: string | null }) | null> => {
+export const getNewsletterForDelivery = async (newsletterId: string): Promise<DeliveryNewsletter | null> => {
   const [row] = await getDb()
     .select({
       id: newsletter.id,
@@ -159,6 +313,8 @@ export const getNewsletterForDelivery = async (
       title: newsletter.title,
       summary: newsletter.summary,
       status: newsletter.status,
+      source: newsletter.source,
+      body: newsletter.body,
       fileName: newsletter.fileName,
       contentType: newsletter.contentType,
       content: newsletter.content,
@@ -166,7 +322,19 @@ export const getNewsletterForDelivery = async (
     .from(newsletter)
     .where(eq(newsletter.id, newsletterId))
     .limit(1);
-  return row ? { ...row, contentType: row.contentType as NewsletterContentType } : null;
+  if (!row?.content || !row.contentType) return null;
+  const contentType = row.contentType as NewsletterContentType;
+  return {
+    id: row.id,
+    organisationId: row.organisationId,
+    title: row.title,
+    summary: row.summary,
+    status: row.status,
+    content: row.content,
+    contentType,
+    fileName: row.fileName ?? fileNameFor(row.title, contentType),
+    body: row.source === "editor" ? (row.body as EditorDocument | null) : null,
+  };
 };
 
 // Counted once per member; repeat visits are ignored.

@@ -10,13 +10,8 @@ export interface NewsletterRow {
 
 export interface NewsletterTableProps {
   rows: NewsletterRow[];
-  // First "YYYY-MM-DD" that can still be scheduled (Dutch time).
-  earliestDate: string;
-}
-
-export interface NewsletterRowActionsProps {
-  newsletter: NewsletterSummary;
-  earliestDate: string;
+  emptyTitle: string;
+  showDelivery?: boolean;
 }
 
 export interface UploadNewsletterFormProps {

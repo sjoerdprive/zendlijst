@@ -1,1 +1,15 @@
-export { createNote, deleteNote, listNotes, setNoteDone } from "./dal";
+export {
+  archiveNote,
+  archiveNotes,
+  countOpenNotes,
+  createNote,
+  deleteNote,
+  deleteNotes,
+  linkWaitingNotesToDraft,
+  listNotes,
+  listNotesAwaitingDecision,
+  listNotesForNewsletter,
+  moveNotes,
+  restoreNote,
+  setNoteDone,
+} from "./dal";

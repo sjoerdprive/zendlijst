@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { Dictionary, Locale } from "@/shared/i18n";
 import { APP_TIME_ZONE, formatWeekdayDate } from "@/shared/lib";
 
@@ -67,3 +68,11 @@ export const describeDelivery = (scheduledAt: Date, t: Dictionary, locale: Local
     DELIVERY_HOUR,
     DELIVERY_WINDOW_END_HOUR,
   );
+
+// A form's "YYYY-MM-DD" (or "" for none) as the fixed delivery moment on that
+// day; the moment must still be ahead.
+export const scheduleDateSchema = (t: Dictionary) =>
+  z
+    .union([z.literal(""), z.iso.date()])
+    .transform((value) => (value ? deliveryMomentForDate(value) : null))
+    .refine((date) => !date || date.getTime() > Date.now(), t.newsletters.futureMoment);

@@ -21,6 +21,7 @@ interface NewsletterEmailInput {
   organisation: Organisation;
   newsletter: NewsletterFile;
   summary: string | null;
+  bodyText: string | null;
   to: string;
   unsubscribeToken: string;
 }
@@ -46,6 +47,7 @@ export const buildNewsletterEmail = ({
   organisation,
   newsletter,
   summary,
+  bodyText,
   to,
   unsubscribeToken,
 }: NewsletterEmailInput): MailMessage => {
@@ -67,7 +69,7 @@ export const buildNewsletterEmail = ({
   );
   const text = [
     newsletter.title,
-    summary ?? "",
+    bodyText ?? summary ?? "",
     `${t.readOnline}: ${readUrl}`,
     `${t.unsubscribe}: ${unsubscribeUrl}`,
   ]

@@ -12,8 +12,8 @@ export const triggerDispatch = async (): Promise<void> => {
       method: "POST",
       headers: { authorization: `Bearer ${getEnv().CRON_SECRET}` },
     });
-    if (!response.ok) console.error("[publish] dispatch trigger failed:", response.status);
+    if (!response.ok) console.error("[dispatch] trigger failed:", response.status);
   } catch (error) {
-    console.error("[publish] dispatch trigger failed:", error);
+    console.error("[dispatch] trigger failed:", error);
   }
 };

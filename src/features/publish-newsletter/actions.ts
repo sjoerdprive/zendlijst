@@ -4,23 +4,14 @@ import { refresh } from "next/cache";
 import { after } from "next/server";
 import { z } from "zod";
 import { authorizeMember } from "@/entities/membership/server";
-import {
-  contentTypeForFileName,
-  deliveryMomentForDate,
-  describeDelivery,
-  MAX_NEWSLETTER_BYTES,
-} from "@/entities/newsletter";
-import {
-  createNewsletter,
-  deleteNewsletter,
-  setNewsletterSchedule,
-} from "@/entities/newsletter/server";
+import { describeDelivery, describeUploadProblem, scheduleDateSchema } from "@/entities/newsletter";
+import { createNewsletter, readNewsletterUpload } from "@/entities/newsletter/server";
+import { linkWaitingNotesToDraft } from "@/entities/note/server";
 import { requireCurrentOrganisation } from "@/entities/organisation/server";
 import type { Dictionary } from "@/shared/i18n";
 import { getDictionary, getLocale } from "@/shared/i18n/server";
 import { actionError, actionSuccess, fieldErrors, type ActionState } from "@/shared/lib";
-import { isPdf, sanitizeNewsletterHtml } from "./sanitize";
-import { triggerDispatch } from "./triggerDispatch";
+import { triggerDispatch } from "@/shared/lib/server";
 
 const authorizeTeam = async () => {
   const organisation = await requireCurrentOrganisation();
@@ -29,17 +20,11 @@ const authorizeTeam = async () => {
 };
 
 // Only a date is chosen; delivery is always at the fixed morning moment (Dutch time).
-const scheduleSchema = (t: Dictionary) =>
-  z
-    .union([z.literal(""), z.iso.date()])
-    .transform((value) => (value ? deliveryMomentForDate(value) : null))
-    .refine((date) => !date || date.getTime() > Date.now(), t.newsletters.futureMoment);
-
 const uploadSchema = (t: Dictionary) =>
   z.object({
     title: z.string().trim().min(2, t.newsletters.titleRequired).max(200),
     summary: z.string().trim().max(500).optional(),
-    scheduledAt: scheduleSchema(t),
+    scheduledAt: scheduleDateSchema(t),
     mode: z.enum(["schedule", "now", "draft"]),
   });
 
@@ -59,16 +44,10 @@ export const uploadNewsletterAction = async (
   });
   if (!parsed.success) return actionError(t.common.checkForm, fieldErrors(parsed.error));
 
-  const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) {
-    return actionError(t.newsletters.chooseFile, { file: [t.newsletters.chooseFile] });
-  }
-  const contentType = contentTypeForFileName(file.name);
-  if (!contentType) {
-    return actionError(t.newsletters.unsupportedType, { file: [t.newsletters.useHtmlOrPdf] });
-  }
-  if (file.size > MAX_NEWSLETTER_BYTES) {
-    return actionError(t.newsletters.tooLarge, { file: [t.newsletters.maxSize] });
+  const upload = await readNewsletterUpload(formData.get("file"));
+  if (!upload.ok) {
+    const { message, field } = describeUploadProblem(upload.problem, t);
+    return actionError(message, { file: [field] });
   }
 
   const { title, summary, mode } = parsed.data;
@@ -77,23 +56,17 @@ export const uploadNewsletterAction = async (
     return actionError(t.newsletters.pickDateTime, { scheduledDate: [t.newsletters.pickDateTime] });
   }
 
-  const raw = Buffer.from(await file.arrayBuffer());
-  if (contentType === "application/pdf" && !isPdf(raw)) {
-    return actionError(t.newsletters.invalidPdf, { file: [t.newsletters.invalidPdf] });
-  }
-  const content =
-    contentType === "text/html" ? Buffer.from(sanitizeNewsletterHtml(raw.toString("utf8")), "utf8") : raw;
-
-  await createNewsletter({
+  const newsletterId = await createNewsletter({
     organisationId: context.organisation.id,
     title,
     summary: summary ?? null,
-    fileName: file.name,
-    contentType,
-    content,
+    ...upload.file,
     scheduledAt,
     createdById: context.member.userId,
   });
+  // A new draft or scheduled issue picks up notes waiting for the next one;
+  // an issue that goes out right away has no use for them.
+  if (mode !== "now") await linkWaitingNotesToDraft(context.organisation.id, newsletterId);
   refresh();
 
   if (mode === "now") {
@@ -102,47 +75,4 @@ export const uploadNewsletterAction = async (
   }
   if (mode === "draft" || !scheduledAt) return actionSuccess(t.newsletters.savedDraft);
   return actionSuccess(t.newsletters.scheduledFor(describeDelivery(scheduledAt, t, await getLocale())));
-};
-
-const rescheduleSchema = (t: Dictionary) =>
-  z.object({
-    newsletterId: z.string().min(1),
-    scheduledAt: scheduleSchema(t),
-  });
-
-export const rescheduleNewsletterAction = async (
-  _previous: ActionState,
-  formData: FormData,
-): Promise<ActionState> => {
-  const context = await authorizeTeam();
-  const t = await getDictionary();
-  if (!context) return actionError(t.common.notAllowed);
-  const parsed = rescheduleSchema(t).safeParse({
-    newsletterId: formData.get("newsletterId"),
-    scheduledAt: formData.get("scheduledDate") ?? "",
-  });
-  if (!parsed.success) return actionError(t.newsletters.futureMoment);
-  const updated = await setNewsletterSchedule(
-    context.organisation.id,
-    parsed.data.newsletterId,
-    parsed.data.scheduledAt,
-  );
-  refresh();
-  if (!updated) return actionError(t.newsletters.alreadySending);
-  if (!parsed.data.scheduledAt) return actionSuccess(t.newsletters.movedToDrafts);
-  return actionSuccess(
-    t.newsletters.rescheduledFor(describeDelivery(parsed.data.scheduledAt, t, await getLocale())),
-  );
-};
-
-export const deleteNewsletterAction = async (
-  _previous: ActionState,
-  formData: FormData,
-): Promise<ActionState> => {
-  const context = await authorizeTeam();
-  const t = await getDictionary();
-  if (!context) return actionError(t.common.notAllowed);
-  const deleted = await deleteNewsletter(context.organisation.id, String(formData.get("newsletterId") ?? ""));
-  refresh();
-  return deleted ? actionSuccess(t.newsletters.deleted) : actionError(t.newsletters.cannotDeleteSent);
 };

@@ -2,7 +2,8 @@
 
 Multi-tenant newsletter platform. Organisations get their own subdomain where people
 subscribe with a magic link, read the archive and choose whether new issues arrive by email.
-Admins and up to two writers upload and schedule newsletters, keep notes, manage subscribers,
+Admins and up to two writers write newsletters in a rich-text editor (or upload HTML/PDF), keep drafts,
+schedule them, keep notes per issue, manage subscribers,
 and are alerted when emails fail to deliver.
 
 - Stack: Next.js 16 (App Router), React 19, Tailwind CSS 4, better-auth (magic link),
@@ -34,7 +35,7 @@ All emails land in Mailpit: <http://localhost:8026>.
    and approve the request. The organisation admin gets a welcome email.
 3. The admin signs in at <http://acme.localhost:3000/sign-in> (`*.localhost` resolves to
    your machine in Chrome, Firefox and Edge; for Safari add `/etc/hosts` entries).
-4. Under **Team** the admin adds writers, uploads a newsletter (HTML or PDF) and schedules it.
+4. Under **Team** the admin adds writers, starts a new draft (or uploads HTML/PDF) and schedules it.
 5. Subscribers visit <http://acme.localhost:3000>, enter their email and confirm via the link.
 
 ## Scripts
@@ -90,6 +91,18 @@ Each slice exposes a client-safe `index.ts` and, where it has data access, a ser
   the delivery moment is stored as 08:00 Europe/Amsterdam (`src/entities/newsletter/schedule.ts`).
 - "Send now" does not wait for the cron: it triggers the dispatcher right after the upload.
 - All dates in the UI are shown in Dutch time (`APP_TIME_ZONE` in `src/shared/lib/format.ts`).
+
+## Drafts and notes
+
+- **Drafts** (Team → Nieuwsbrieven → Nieuw concept) can be saved empty and edited at any time. They are written
+  in the rich-text editor (autosaved, with a conflict check between tabs) or carry an uploaded HTML/PDF file.
+  Scheduling or sending needs a title and content; scheduled issues stay editable until sending starts.
+- The editor's JSON (`newsletter.body`) is validated and rendered to email HTML on the server
+  (`src/entities/newsletter/render.ts`); the rendered HTML is what is emailed and archived.
+- **Notes** go to the next newsletter by default: the earliest scheduled issue, or the next draft that gets
+  created when nothing is scheduled. They are shown next to the editor. After an issue is sent, the overview
+  asks whether to archive, delete or take its open notes along to the next issue. Archived notes are under
+  Team → Notities → Archief.
 
 ## Subscription policy
 

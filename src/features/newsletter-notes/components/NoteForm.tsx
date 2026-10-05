@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { newsletterDisplayTitle } from "@/entities/newsletter";
 import { useDictionary } from "@/shared/i18n";
 import { IDLE_STATE } from "@/shared/lib";
 import { Field, FormMessage, Select, SubmitButton, Textarea } from "@/shared/ui";
@@ -18,14 +19,16 @@ export const NoteForm = ({ newsletters }: NoteFormProps) => {
       </Field>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <div className="flex-1">
-          <Field label={t.notes.related} name="newsletterId">
-            <Select id="newsletterId" name="newsletterId" defaultValue="">
-              <option value="">{t.notes.general}</option>
+          <Field label={t.notes.related} name="target" hint={t.notes.nextHint}>
+            <Select id="target" name="target" defaultValue="next">
+              <option value="next">{t.notes.next}</option>
               {newsletters.map((newsletter) => (
-                <option key={newsletter.id} value={newsletter.id}>
-                  {newsletter.title}
+                <option key={newsletter.id} value={`newsletter:${newsletter.id}`}>
+                  {newsletterDisplayTitle(newsletter.title, t.newsletters.untitled)} (
+                  {t.newsletters.statuses[newsletter.status]})
                 </option>
               ))}
+              <option value="general">{t.notes.general}</option>
             </Select>
           </Field>
         </div>

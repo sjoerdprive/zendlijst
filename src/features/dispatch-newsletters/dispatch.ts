@@ -1,7 +1,7 @@
 import "server-only";
 import { listUnresolvedFailures } from "@/entities/delivery/server";
 import { createUnsubscribeToken, listTeamEmails } from "@/entities/membership/server";
-import { getNewsletter, getNewsletterForDelivery } from "@/entities/newsletter/server";
+import { getNewsletter, getNewsletterForDelivery, renderNewsletterText } from "@/entities/newsletter/server";
 import type { NewsletterFile } from "@/entities/newsletter";
 import { getOrganisationById } from "@/entities/organisation/server";
 import type { Organisation } from "@/entities/organisation";
@@ -29,6 +29,8 @@ interface NewsletterContext {
   organisation: Organisation;
   file: NewsletterFile;
   summary: string | null;
+  // Plain-text version of editor newsletters; null for uploaded files.
+  bodyText: string | null;
 }
 
 const errorMessage = (error: unknown): string =>
@@ -38,7 +40,9 @@ const loadContext = async (newsletterId: string): Promise<NewsletterContext | nu
   const file = await getNewsletterForDelivery(newsletterId);
   if (!file) return null;
   const organisation = await getOrganisationById(file.organisationId);
-  return organisation ? { organisation, file, summary: file.summary } : null;
+  if (!organisation) return null;
+  const bodyText = file.body ? renderNewsletterText(file.body) : null;
+  return { organisation, file, summary: file.summary, bodyText };
 };
 
 const sendOne = async (
@@ -56,6 +60,7 @@ const sendOne = async (
         organisation: context.organisation,
         newsletter: context.file,
         summary: context.summary,
+        bodyText: context.bodyText,
         to: decryptEmail(claimed.recipientEmailEncrypted),
         unsubscribeToken: createUnsubscribeToken(claimed.membershipId),
       }),

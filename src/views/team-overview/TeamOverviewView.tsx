@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { listUnresolvedFailures } from "@/entities/delivery/server";
 import { countSubscriptionRequests, listMembers } from "@/entities/membership/server";
-import { DELIVERY_HOUR, DELIVERY_WINDOW_END_HOUR, deliveryMomentFor } from "@/entities/newsletter";
+import { DELIVERY_HOUR, DELIVERY_WINDOW_END_HOUR, deliveryMomentFor, newsletterDisplayTitle } from "@/entities/newsletter";
 import { getNextScheduledNewsletter, listAllNewsletters } from "@/entities/newsletter/server";
-import { listNotes } from "@/entities/note/server";
+import { listNotes, listNotesAwaitingDecision } from "@/entities/note/server";
 import { FailurePanel } from "@/features/delivery-failures";
+import { SentNotesPrompt } from "@/features/newsletter-notes";
 import { ShareSubscribeCard } from "@/features/share-subscribe-link";
 import { organisationUrl } from "@/shared/config";
 import { getDictionary, getLocale } from "@/shared/i18n/server";
@@ -15,12 +16,13 @@ import { requireTeamAccess } from "@/widgets/team-shell/server";
 
 export const TeamOverviewView = async () => {
   const { organisation, role } = await requireTeamAccess();
-  const [failures, members, next, newsletters, notes, requestCount, t, locale] = await Promise.all([
+  const [failures, members, next, newsletters, notes, awaitingDecision, requestCount, t, locale] = await Promise.all([
     listUnresolvedFailures(organisation.id),
     listMembers(organisation.id, ["admin", "writer", "subscriber"]),
     getNextScheduledNewsletter(organisation.id),
     listAllNewsletters(organisation.id),
     listNotes(organisation.id),
+    listNotesAwaitingDecision(organisation.id),
     role === "admin" ? countSubscriptionRequests(organisation.id) : Promise.resolve(0),
     getDictionary(),
     getLocale(),
@@ -39,6 +41,7 @@ export const TeamOverviewView = async () => {
           </Link>
         </Notice>
       )}
+      <SentNotesPrompt groups={awaitingDecision} />
       <FailurePanel failures={failures} />
       {failures.length === 0 && <Notice tone="success">{t.overview.allDelivered}</Notice>}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -49,7 +52,7 @@ export const TeamOverviewView = async () => {
           value={next?.scheduledAt ? formatDate(deliveryMomentFor(next.scheduledAt), locale) : "—"}
           hint={
             next
-              ? `${t.schedule.between(DELIVERY_HOUR, DELIVERY_WINDOW_END_HOUR)} · ${next.title}`
+              ? `${t.schedule.between(DELIVERY_HOUR, DELIVERY_WINDOW_END_HOUR)} · ${newsletterDisplayTitle(next.title, t.newsletters.untitled)}`
               : t.overview.nothingScheduled
           }
         />
